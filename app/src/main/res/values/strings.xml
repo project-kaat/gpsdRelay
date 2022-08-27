@@ -1,0 +1,78 @@
+<resources>
+
+    #GENERAL
+
+    <string name="app_name">gpsdRelay</string>
+    <string name="tab_main_title">Main</string>
+    <string name="tab_settings_title">Settings</string>
+
+    #MAIN TAB
+
+    <string name="main_start_button_text">Start server</string>
+    <string name="main_stop_button_text">Stop server</string>
+    <string name="main_current_ip_title">Server bound to IP</string>
+
+    #SETTINGS TAB
+
+    <string name="settings_server_type_title">Server type</string>
+    <string name="settings_server_type_description">Which protocol to use for data transmission</string>
+
+    <string name="settings_ip_address_src_title">Source IP address</string>
+    <string name="settings_ip_address_src_description">Address to listen on / send from</string>
+    <string name="settings_ip_port_src_title">Source Port</string>
+    <string name="settings_ip_port_src_description">Port to listen on / send from</string>
+    <string name="settings_ip_address_dst_title">Destination IP address</string>
+    <string name="settings_ip_address_dst_description">Address to send to (ignored if TCP)</string>
+    <string name="settings_ip_port_dst_title">Destination Port</string>
+    <string name="settings_ip_port_dst_description">Port to send to (ignored if TCP)</string>
+
+    <string name="settings_sync_interval_title">NMEA generation interval</string>
+    <string name="settings_sync_interval_description">(milliseconds) not applicable to relayed NMEA messages</string>
+    <string name="settings_sync_interval_hint">Default is 1000ms</string>
+
+    <string-array name="settings_server_type_value_list">
+        <item name="settings_server_type_value_tcp">TCP</item>
+        <item name="settings_server_type_value_udp">UDP</item>
+    </string-array>
+
+    <string name="settings_generate_nmea_title">Generate own NMEA messages</string>
+    <string name="settings_generate_nmea_description">(only GPRMC)</string>
+
+    <string name="settings_relay_nmea_title">Relay GPS chipset NMEA messages</string>
+    <string name="settings_relay_nmea_description">(Could be unreliable)</string>
+
+    #SERVICE NOTIFICATION
+
+    <string name="notification_channel_name">NMEA relay over TCP service</string>
+    <string name="notification_service_running">NMEA relay is running</string>
+
+    #SETTINGS DEFAULT_VALUES
+
+    <string name="settings_ipa_src_default">0.0.0.0</string>
+    <string name="settings_ipp_src_default">6000</string>
+    <string name="settings_ipa_dst_default">192.168.1.255</string>
+    <string name="settings_ipp_dst_default">6000</string>
+    <string name="settings_sync_interval_default">1000</string>
+    <string name="settings_server_type_default">UDP</string>
+
+    #SETTINGS STORAGE KEYS
+
+    <string name="settings_key_ipa_src">settings_key_ipa_src</string>
+    <string name="settings_key_ipp_src">settings_key_ipp_src</string>
+    <string name="settings_key_ipa_dst">settings_key_ipa_dst</string>
+    <string name="settings_key_ipp_dst">settings_key_ipp_dst</string>
+    <string name="settings_key_sync_interval">settings_key_sync_interval</string>
+    <string name="settings_key_server_type">settings_key_server_type</string>
+    <string name="settings_key_generate_nmea">settings_key_generate_nmea</string>
+    <string name="settings_key_relay_nmea">settings_key_relay_nmea</string>
+
+    #INTENT ACTIONS
+
+    <string name="INTENT_ACTION_STOP_SERVICE">STOP SERVICE</string>
+    <string name="INTENT_ACTION_START_SERVICE">START SERVICE</string>
+
+    #LOG TAGS
+
+    <string name="LOG_TAG_SERVICE_THREAD">GPSDRELAY_SERVICE_THREAD</string>
+
+</resources>
