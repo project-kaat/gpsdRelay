@@ -1,6 +1,6 @@
 # GPSD Relay
 
-![gpsdRelay launcher icon](./app/src/main/ic_launcher-playstore.png)
+<img src="./app/src/main/ic_launcher-playstore.png" width="256">
 
 ## Description
 
