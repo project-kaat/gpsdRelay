@@ -1,4 +1,4 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 interface SocketServerInterface {
     fun send(data : String)

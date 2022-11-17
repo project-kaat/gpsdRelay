@@ -1,10 +1,10 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.gpsdrelay.databinding.ActivityMainBinding
+import io.github.project_kaat.gpsdrelay.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
 
 val tabTitleArray = arrayOf(

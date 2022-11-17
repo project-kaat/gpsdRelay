@@ -1,4 +1,4 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager

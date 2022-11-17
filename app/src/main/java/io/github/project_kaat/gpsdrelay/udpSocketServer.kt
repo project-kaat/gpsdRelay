@@ -1,11 +1,12 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 import android.util.Log
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 
-class udpSocketServer(private val ipv4AddressSRC : String, private val ipv4PortSRC : String, private val ipv4AddressDST : String, private val ipv4PortDST : String) : SocketServerInterface {
+class udpSocketServer(private val ipv4AddressSRC : String, private val ipv4PortSRC : String, private val ipv4AddressDST : String, private val ipv4PortDST : String) :
+    SocketServerInterface {
     private val TAG = "udpSocketServer"
 
     private lateinit var networkThread : NetworkThread

@@ -1,4 +1,4 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 import android.util.Log
 import java.io.IOException
@@ -7,7 +7,8 @@ import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4PortSrc : String) : SocketServerInterface {
+class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4PortSrc : String) :
+    SocketServerInterface {
 
     private val TAG = "tcpSocketServer"
     private lateinit var networkThread : NetworkThread

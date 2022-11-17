@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.gpsdrelay">
+    package="io.github.project_kaat.gpsdrelay">
 
     <application
         android:allowBackup="true"
@@ -14,7 +14,7 @@
         android:theme="@style/Theme.GpsdRelay"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="io.github.project_kaat.gpsdrelay.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.GpsdRelay.NoActionBar">
@@ -24,7 +24,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".nmeaServerService"
+        <service android:name="io.github.project_kaat.gpsdrelay.nmeaServerService"
             android:enabled="true"
             android:exported="false"/>
     </application>

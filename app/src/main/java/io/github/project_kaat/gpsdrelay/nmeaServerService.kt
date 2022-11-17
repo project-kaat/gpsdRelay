@@ -1,4 +1,4 @@
-package com.example.gpsdrelay
+package io.github.project_kaat.gpsdrelay
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -117,7 +117,9 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
             val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-            sendInterval = prefs.getString(getString(R.string.settings_key_sync_interval), getString(R.string.settings_sync_interval_default))!!.toLong()
+            sendInterval = prefs.getString(getString(R.string.settings_key_sync_interval), getString(
+                R.string.settings_sync_interval_default
+            ))!!.toLong()
             generateOwnNMEA = prefs.getBoolean(getString(R.string.settings_key_generate_nmea), false)
             relayNMEA = prefs.getBoolean(getString(R.string.settings_key_relay_nmea), false)
             startSelfForeground()
