@@ -59,7 +59,7 @@ class udpSocketServer(private val ipv4AddressSRC : String, private val ipv4PortS
                 exit()
             }
             catch (e : InterruptedException) {
-                Log.e(TAG, "thread was interrupted")
+                //Log.i(TAG, "thread was interrupted")
                 exit()
             }
         }

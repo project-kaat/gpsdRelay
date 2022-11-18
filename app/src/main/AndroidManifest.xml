@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="io.github.project_kaat.gpsdrelay">
+    package="io.github.project_kaat.gpsdrelay"
+    android:versionCode="01"
+    android:versionName="0.1">
+
 
     <application
         android:allowBackup="true"
