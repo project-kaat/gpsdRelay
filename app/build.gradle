@@ -29,7 +29,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
-            output.outputFileName = "gpsdRelay" + "-v" + versionName
+            output.outputFileName = "gpsdRelay" + "-v" + versionName + ".apk"
         }
     }
     compileOptions {
