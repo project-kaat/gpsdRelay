@@ -27,6 +27,11 @@ android {
             debuggable true
         }
     }
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName = "gpsdRelay" + "-v" + versionName
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
