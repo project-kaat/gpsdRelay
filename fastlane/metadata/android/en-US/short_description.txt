@@ -1,0 +1,1 @@
+Relay NMEA information from Android to gpsd.

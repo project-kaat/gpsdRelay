@@ -1,0 +1,1 @@
+This app allows you to utilize an Android device's GPS chip as a gpsd location data provider. UDP or TCP transport protocols are supported for supplying NMEA messages to the daemon.
