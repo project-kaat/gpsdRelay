@@ -12,6 +12,12 @@ The app supports blindly relaying whatever NMEA sentences it reveives from the u
 
 For this to work, the device needs to have a GPS fix available and the gpsd server has to be reachable by the device via IP.
 
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/io.github.project_kaat.gpsdrelay/)
+
+or get it from the [Releases section](https://github.com/project-kaat/gpsdRelay/releases/latest).
+
 ### Screenshots
 
 The main tab has a button that starts the relay server.
