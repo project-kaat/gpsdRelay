@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
 class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private val TAG = "nmeaServerService"
@@ -41,7 +42,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     private fun timestampToUTC(timeMS : Long) : Array<String> {
 
-        val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00")
+        val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00", Locale.US)
         val datetimeString = datetimeFormat.format(Date(timeMS))
         return arrayOf(datetimeString.substringBefore('-'), datetimeString.substringAfter('-'))
     }
@@ -49,33 +50,34 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private fun ddToDDMM(decimalDegrees : Double, isLatitude : Boolean) : String {
         val degrees = decimalDegrees.toInt()
         val minutes = ((decimalDegrees - degrees) * 60)
-        var retString : String
-        if (isLatitude) {
-            retString = degrees.toString().padStart(2, '0')
-        }
-        else {
-            retString = degrees.toString().padStart(3, '0')
-        }
-        retString += minutes.toString().padStart(2, '0').substring(0, 7)
+        val orientation : String // Store the easting/westing northing/southing indicators
+        val coordinate : String
 
+        // Since the orientation is returned, the degrees should never be negative
         if (isLatitude) {
             if (decimalDegrees > 0) {
-                retString += ",N"
+                orientation = ",N"
             }
             else {
-                retString += ",S"
+                orientation = ",S"
             }
+            coordinate = abs(degrees).toString().padStart(2, '0') +
+                    minutes.toString().padStart(2, '0').substring(0, 7) +
+                    orientation
         }
         else {
             if (decimalDegrees > 0) {
-                retString += ",E"
+                orientation = ",E"
             }
             else {
-                retString += ",W"
+                orientation = ",W"
             }
+            coordinate = abs(degrees).toString().padStart(3, '0') +
+                    minutes.toString().padStart(2, '0').substring(0, 7) +
+                    orientation
         }
 
-        return retString
+        return coordinate
     }
 
     override fun onLocationChanged(p0: Location) {
@@ -87,7 +89,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
             val longString = ddToDDMM(p0.longitude, false)
 
             var msg = "\$GPRMC,${utcDateTime[1]},A,${latString},${longString},,,${utcDateTime[0]},,,,V*"
-            var checksum : Int = 0
+            var checksum = 0
             for (char in msg) {
                 when (char) {
                     '$' -> continue
