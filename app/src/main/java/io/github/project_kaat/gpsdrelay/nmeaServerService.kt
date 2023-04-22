@@ -49,7 +49,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     private fun ddToDDMM(decimalDegrees : Double, isLatitude : Boolean) : String {
         val degrees = decimalDegrees.toInt()
-        val minutes = ((decimalDegrees - degrees) * 60)
+        val minutes = abs( ((decimalDegrees - degrees) * 60)  )
         val orientation : String // Store the easting/westing northing/southing indicators
         val coordinate : String
 
