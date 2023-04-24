@@ -9,6 +9,7 @@ import android.content.Intent
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.hardware.GeomagneticField
 import android.location.OnNmeaMessageListener
 import android.os.*
 import android.util.Log
@@ -28,6 +29,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private lateinit var handler : Handler
     private var generateOwnNMEA : Boolean = false
     private var relayNMEA : Boolean = false
+    private var isMockLocation : Boolean = false
 
     private val isServerReady = object : Runnable {
         override fun run() {
@@ -40,6 +42,35 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         }
     }
 
+    private fun isMockLocationEnabled(context : Context, p0 : Location) : Boolean {
+        // Check the status of mock location which will be used by external GPS receivers
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val providers = locationManager.getProviders(true)
+
+        // API level 24-30 doesn't support Location.isMock() for this functionality
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+            for (provider in providers) {
+                if (p0.isFromMockProvider()) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        // API 31+ supports Location.isMock() for this functionality
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            for (provider in providers) {
+                if (p0.isMock) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        // Default to false
+        return false
+        }
+
     private fun timestampToUTC(timeMS : Long) : Array<String> {
 
         val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00", Locale.US)
@@ -50,172 +81,306 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private fun ddToDDMM(decimalDegrees : Double, isLatitude : Boolean) : String {
         val degrees = decimalDegrees.toInt()
         val minutes = abs( ((decimalDegrees - degrees) * 60)  )
-        val orientation : String // Store the easting/westing northing/southing indicators
+        val minuteParts = minutes.toString().split(".")
+        val integerPartOfMinutes = minuteParts[0].padStart(2, '0')
+        val fractionalPartOfMinutes = minuteParts.getOrNull(1)?.padEnd(6, '0')?.substring(0, 6) ?: "000000"
         val coordinate : String
 
+        val orientation = if (isLatitude) {
+            if (decimalDegrees > 0) ",N" else ",S"
+        } else {
+            if (decimalDegrees > 0) ",E" else ",W"
+        }
+
         // Since the orientation is returned, the degrees should never be negative
-        if (isLatitude) {
-            if (decimalDegrees > 0) {
-                orientation = ",N"
-            }
-            else {
-                orientation = ",S"
-            }
-            coordinate = abs(degrees).toString().padStart(2, '0') +
-                    minutes.toString().padStart(2, '0').substring(0, 7) +
-                    orientation
-        }
-        else {
-            if (decimalDegrees > 0) {
-                orientation = ",E"
-            }
-            else {
-                orientation = ",W"
-            }
-            coordinate = abs(degrees).toString().padStart(3, '0') +
-                    minutes.toString().padStart(2, '0').substring(0, 7) +
-                    orientation
-        }
+        val paddedDegrees = abs(degrees).toString().padStart(if (isLatitude) 2 else 3, '0')
+        coordinate = "$paddedDegrees$integerPartOfMinutes.$fractionalPartOfMinutes$orientation"
 
         return coordinate
     }
 
-    override fun onLocationChanged(p0: Location) {
-
-        if (generateOwnNMEA) {
-
-            val utcDateTime = timestampToUTC(p0.time)
-            val latString = ddToDDMM(p0.latitude, true)
-            val longString = ddToDDMM(p0.longitude, false)
-
-            var msg = "\$GPRMC,${utcDateTime[1]},A,${latString},${longString},,,${utcDateTime[0]},,,,V*"
-            var checksum = 0
-            for (char in msg) {
-                when (char) {
-                    '$' -> continue
-                    '*' -> break
-                    else -> {
-                        checksum = checksum.xor(char.code)
-                    }
+    private fun getChecksumString(message : String) : String {
+        var checksum = 0
+        for (char in message) {
+            when (char) {
+                '$' -> continue
+                '*' -> break
+                else -> {
+                    checksum = checksum.xor(char.code)
                 }
             }
-
-            msg += checksum.toString(16) + "\r\n"
-            
-            socketServer.send(msg)
         }
+
+        return checksum.toString(16)
     }
+
+    private fun getGNGGA(p0 : Location) : String {
+        /*
+        NMEA GGA standard referenced from https://gpsd.io/NMEA.html#_gga_global_positioning_system_fix_data
+        Example:
+        $GNGGA,001043.00,4404.14036,N,12118.85961,W,1,12,0.98,1113.0,M,-21.3,M*47
+
+        $--GGA,hhmmss.ss,ddmm.mm,a,ddmm.mm,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh<CR><LF>
+
+        Field Number:
+            0.  Talker ID + GGA
+            1.  UTC of this position report, hh is hours, mm is minutes, ss.ss is seconds.
+            2.  Latitude, dd is degrees, mm.mm is minutes
+            3.  N or S (North or South)
+            4.  Longitude, dd is degrees, mm.mm is minutes
+            5.  E or W (East or West)
+            6.  GPS Quality Indicator (non null)
+                 0 - fix not available,
+                 1 - GPS fix,
+                 2 - Differential GPS fix (values above 2 are 2.3 features)
+                 3 = PPS fix
+                 4 = Real Time Kinematic
+                 5 = Float RTK
+                 6 = estimated (dead reckoning)
+                 7 = Manual input mode
+                 8 = Simulation mode
+            7.  Number of satellites in use, 00 - 12
+            8.  Horizontal Dilution of precision (meters)
+            9.  Antenna Altitude above/below mean-sea-level (geoid) (in meters)
+            10. Units of antenna altitude, meters
+            11. Geoidal separation, the difference between the WGS-84 earth ellipsoid and mean-sea-level (geoid), "-" means mean-sea-level below ellipsoid
+            12. Units of geoidal separation, meters
+            13. Age of differential GPS data, time in seconds since last SC104 type 1 or 9 update, null field when DGPS is not used
+            14. Differential reference station ID, 0000-1023
+            15. Checksum
+
+            The number of digits past the decimal point for Time, Latitude and Longitude is model dependent.
+        */
+        val utcDateTime = timestampToUTC(p0.time)
+        val latString = ddToDDMM(p0.latitude, true)
+        val longString = ddToDDMM(p0.longitude, false)
+        val altString = String.format("%.1f", p0.altitude)
+        val accuracyString = String.format("%.1f", p0.accuracy)
+
+        // Fields 6 and 7 will always represent a fix with 12 satellites
+        // Lat and long are fields 2,3 and 4,5 because they include the orientation
+        // Geoidal separation will always report as 0 M
+        var msg = "\$GNGGA,${utcDateTime[1]},${latString},${longString},1,12,${accuracyString},${altString},M,0,M,,*"
+        msg += getChecksumString(msg) + "\r\n"
+
+        return msg
+    }
+
+    private fun getGNVTG(p0 : Location) : String {
+    /*
+        NMEA GGA standard referenced from: https://gpsd.io/NMEA.html#_vtg_track_made_good_and_ground_speed
+        Example: $GPVTG,220.86,T,,M,2.550,N,4.724,K,A*34
+
+        $--VTG,x.x,T,x.x,M,x.x,N,x.x,K*hh<CR><LF>
+        NMEA 2.3:
+        $--VTG,x.x,T,x.x,M,x.x,N,x.x,K,m*hh<CR><LF>
+
+        Field Number:
+            0.  Talker ID + VTG
+            1.  Course over ground, degrees True
+            2.  T = True
+            3.  Course over ground, degrees Magnetic
+            4.  M = Magnetic
+            5.  Speed over ground, knots
+            6.  N = Knots
+            7.  Speed over ground, km/hr
+            8.  K = Kilometers Per Hour
+            9.  FAA mode indicator (NMEA 2.3 and later)
+            10. Checksum
+     */
+        val courseTrueString = String.format("%.2f", p0.bearing)
+
+        // Finding the declination angle is necessary to calculate the magnetic course
+        val geomagneticField = GeomagneticField(
+            p0.latitude.toFloat(),
+            p0.longitude.toFloat(),
+            p0.altitude.toFloat(),
+            p0.time
+        )
+        val declination = geomagneticField.declination
+        val courseMagString = String.format("%.2f", ( (p0.bearing + declination) % 360) )
+
+        /*
+            Speed is returned in M/s so the following conversion formulas are needed:
+            M/s to knots = (meters_per_second * 3600) / 1852
+            M/s to km/hr = meters_per_second * 3.6
+         */
+        val knotsString = String.format("%.1f", (p0.speed * 3600 / 1852 ) )
+        val kmPerHrString = String.format("%.1f", (p0.speed * 3.6) )
+
+        // Always returns autonomous FAA mode
+        var msg = "\$GNVTG,${courseTrueString},T,${courseMagString},M,${knotsString},N,${kmPerHrString},K,A*"
+        msg += getChecksumString(msg) + "\r\n"
+
+        return msg
+    }
+
+    private fun getGPRMC(p0 : Location) : String {
+        /*
+            NMEA RMC standard referenced from: https://gpsd.io/NMEA.html#_rmc_recommended_minimum_navigation_information
+            Example: $GNRMC,001031.00,A,4404.13993,N,12118.86023,W,0.146,,100117,,,A*7B
+
+            $--RMC,hhmmss.ss,A,ddmm.mm,a,dddmm.mm,a,x.x,x.x,xxxx,x.x,a*hh<CR><LF>
+            NMEA 2.3:
+            $--RMC,hhmmss.ss,A,ddmm.mm,a,dddmm.mm,a,x.x,x.x,xxxx,x.x,a,m*hh<CR><LF>
+            NMEA 4.1:
+            $--RMC,hhmmss.ss,A,ddmm.mm,a,dddmm.mm,a,x.x,x.x,xxxx,x.x,a,m,s*hh<CR><LF>
+
+            Field Number:
+                0.  Talker ID + RMC
+                1.  UTC of position fix, hh is hours, mm is minutes, ss.ss is seconds.
+                2.  Status, A = Valid, V = Warning
+                3.  Latitude, dd is degrees. mm.mm is minutes.
+                4.  N or S
+                5.  Longitude, ddd is degrees. mm.mm is minutes.
+                6.  E or W
+                7.  Speed over ground, knots
+                8.  Track made good, degrees true
+                9.  Date, ddmmyy
+                10. Magnetic Variation, degrees
+                11. E or W
+                12. FAA mode indicator (NMEA 2.3 and later)
+                13. Nav Status (NMEA 4.1 and later) A=autonomous, D=differential, E=Estimated, M=Manual input mode N=not valid, S=Simulator, V = Valid
+                14. Checksum
+         */
+
+        val utcDateTime = timestampToUTC(p0.time)
+        val latString = ddToDDMM(p0.latitude, true)
+        val longString = ddToDDMM(p0.longitude, false)
+        val courseTrueString = p0.bearing
+
+        val knotsString = ( (p0.speed) * 3600 / 1852).toString()
+
+        var msg =
+            "\$GPRMC,${utcDateTime[1]},A,${latString},${longString},${knotsString},${courseTrueString},${utcDateTime[0]},,,A,V*"
+
+        msg += getChecksumString(msg) + "\r\n"
+        return msg
+    }
+
+    override fun onLocationChanged(p0: Location) {
+
+        isMockLocation = isMockLocationEnabled(this, p0)
+
+        // If we are receiving mock location data, then create GPGGA and GPVTG strings to pass
+        val msg = if (isMockLocation)
+                getGNGGA(p0) + getGNVTG(p0)
+                else
+                    getGPRMC(p0)
+
+        socketServer.send(msg)
+}
 
     override fun onNmeaMessage(p0: String?, p1: Long) {
-        //Log.i("SERVICE", "nmea message received: ${p0}")
-        if (p0 != null) {
-            socketServer.send(p0)
-        }
+    //Log.i("SERVICE", "nmea message received: ${p0}")
+    if (p0 != null) {
+        socketServer.send(p0)
     }
+}
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
 
-        if (intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
+    if (intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
 
-            val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-            sendInterval = prefs.getString(getString(R.string.settings_key_sync_interval), getString(
-                R.string.settings_sync_interval_default
-            ))!!.toLong()
-            generateOwnNMEA = prefs.getBoolean(getString(R.string.settings_key_generate_nmea), false)
-            relayNMEA = prefs.getBoolean(getString(R.string.settings_key_relay_nmea), false)
-            startSelfForeground()
-            when (prefs.getString(getString(R.string.settings_key_server_type), getString(R.string.settings_server_type_default))) {
-                "TCP" ->
-                    socketServer = tcpSocketServer(
-                        prefs.getString(getString(R.string.settings_key_ipa_src), getString(R.string.settings_ipa_src_default))!!,
-                        prefs.getString(getString(R.string.settings_key_ipp_src), getString(R.string.settings_ipp_src_default))!!,
-                    )
-                "UDP" ->
-                    socketServer = udpSocketServer(
-                        prefs.getString(getString(R.string.settings_key_ipa_src), getString(R.string.settings_ipa_src_default))!!,
-                        prefs.getString(getString(R.string.settings_key_ipp_src), getString(R.string.settings_ipp_src_default))!!,
-                        prefs.getString(getString(R.string.settings_key_ipa_dst), getString(R.string.settings_ipa_dst_default))!!,
-                        prefs.getString(getString(R.string.settings_key_ipp_dst), getString(R.string.settings_ipp_dst_default))!!
-                    )
-            }
-            
-            socketServer.start()
-            locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-            handler = Handler(mainLooper)
-
-            handler.post(isServerReady)
-
-            return START_STICKY
-
-            }
-        else {
-            //Log.i(TAG, "Service is stopping")
-            stopSelf()
-            stopForeground(true)
-            return START_NOT_STICKY
+        sendInterval = prefs.getString(getString(R.string.settings_key_sync_interval), getString(
+            R.string.settings_sync_interval_default
+        ))!!.toLong()
+        generateOwnNMEA = prefs.getBoolean(getString(R.string.settings_key_generate_nmea), false)
+        relayNMEA = prefs.getBoolean(getString(R.string.settings_key_relay_nmea), false)
+        startSelfForeground()
+        when (prefs.getString(getString(R.string.settings_key_server_type), getString(R.string.settings_server_type_default))) {
+            "TCP" ->
+                socketServer = tcpSocketServer(
+                    prefs.getString(getString(R.string.settings_key_ipa_src), getString(R.string.settings_ipa_src_default))!!,
+                    prefs.getString(getString(R.string.settings_key_ipp_src), getString(R.string.settings_ipp_src_default))!!,
+                )
+            "UDP" ->
+                socketServer = udpSocketServer(
+                    prefs.getString(getString(R.string.settings_key_ipa_src), getString(R.string.settings_ipa_src_default))!!,
+                    prefs.getString(getString(R.string.settings_key_ipp_src), getString(R.string.settings_ipp_src_default))!!,
+                    prefs.getString(getString(R.string.settings_key_ipa_dst), getString(R.string.settings_ipa_dst_default))!!,
+                    prefs.getString(getString(R.string.settings_key_ipp_dst), getString(R.string.settings_ipp_dst_default))!!
+                )
         }
+
+        socketServer.start()
+        locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        handler = Handler(mainLooper)
+
+        handler.post(isServerReady)
+
+        return START_STICKY
+
+        }
+    else {
+        //Log.i(TAG, "Service is stopping")
+        stopSelf()
+        stopForeground(true)
+        return START_NOT_STICKY
     }
+}
 
     override fun onBind(p0: Intent?): IBinder? {
-        return null
-    }
+    return null
+}
 
     override fun onDestroy() {
-        socketServer.stop()
-        disableLocationUpdates()
-        super.onDestroy()
+    socketServer.stop()
+    disableLocationUpdates()
+    super.onDestroy()
 
-    }
+}
 
     private fun startSelfForeground() {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val NOTIFICATION_CHANNEL_ID = packageName
-            val channelName = getString(R.string.notification_channel_name)
-            val chan = NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE)
-            chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-            val manager = (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-            manager.createNotificationChannel(chan)
-            val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            val notification = notificationBuilder.setOngoing(true)
-                .setContentTitle(getString(R.string.notification_service_running))
-                .setPriority(NotificationManager.IMPORTANCE_MIN)
-                .setCategory(Notification.CATEGORY_SERVICE)
-                .build()
-            startForeground(2, notification)
-
-        }
-        else {
-            startForeground(1, Notification())
-        }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val NOTIFICATION_CHANNEL_ID = packageName
+        val channelName = getString(R.string.notification_channel_name)
+        val chan = NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE)
+        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        val manager = (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+        manager.createNotificationChannel(chan)
+        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val notification = notificationBuilder.setOngoing(true)
+            .setContentTitle(getString(R.string.notification_service_running))
+            .setPriority(NotificationManager.IMPORTANCE_MIN)
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .build()
+        startForeground(2, notification)
 
     }
+    else {
+        startForeground(1, Notification())
+    }
+
+}
 
     private fun enableLocationUpdates() {
-        try {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                sendInterval,
-                0f,
-                this
-            )
-            if (relayNMEA) {
-                locationManager.addNmeaListener(this, null)
-            }
-
-        } catch (e: SecurityException) {
-            Log.e(TAG, "GPS access security exception")
-            Toast.makeText(this, "Not authorized to use GPS", Toast.LENGTH_LONG).show()
+    try {
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            sendInterval,
+            0f,
+            this
+        )
+        if (relayNMEA) {
+            locationManager.addNmeaListener(this, null)
         }
+
+    } catch (e: SecurityException) {
+        Log.e(TAG, "GPS access security exception")
+        Toast.makeText(this, "Not authorized to use GPS", Toast.LENGTH_LONG).show()
     }
+}
 
     private fun disableLocationUpdates() {
-        locationManager.removeUpdates(this)
-        if (relayNMEA) {
-            locationManager.removeNmeaListener(this)
-        }
-
+    locationManager.removeUpdates(this)
+    if (relayNMEA) {
+        locationManager.removeNmeaListener(this)
     }
+
+}
 }
