@@ -36,7 +36,7 @@
     </string-array>
 
     <string name="settings_generate_nmea_title">Generate own NMEA messages</string>
-    <string name="settings_generate_nmea_description">(only GPRMC)</string>
+    <string name="settings_generate_nmea_description">(relays GNGGA and GNVTG from mockGPS, otherwise generates only GPRMC)</string>
 
     <string name="settings_relay_nmea_title">Relay GPS chipset NMEA messages</string>
     <string name="settings_relay_nmea_description">(Could be unreliable)</string>
