@@ -1,0 +1,3 @@
+added support for mock GPS
+added support for concurrent TCP client connections
+added GNGGA, GNVTG message generation
