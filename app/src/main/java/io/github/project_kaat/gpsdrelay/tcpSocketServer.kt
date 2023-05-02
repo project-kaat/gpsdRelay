@@ -12,10 +12,8 @@ class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4Port
 
     private val TAG = "tcpSocketServer"
     private lateinit var networkThread : NetworkThread
-    private var clientConnected = AtomicBoolean()
 
     override fun start() {
-        clientConnected.set(false)
         val src : InetSocketAddress
         try {
             src = InetSocketAddress(ipv4AddressSrc, ipv4PortSrc.toInt())
@@ -24,76 +22,100 @@ class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4Port
             Log.e(TAG, "Invalid ip AND/OR port supplied")
             return
         }
-        networkThread = NetworkThread(src, clientConnected)
+        networkThread = NetworkThread(src)
         networkThread.start()
     }
 
 
-    private class NetworkThread(private val srcAddress : SocketAddress, val clientConnected : AtomicBoolean) : Thread() {
+    private class NetworkThread(private val srcAddress : SocketAddress) : Thread() {
         private val TAG = "tcpSocketServer.NetworkThread"
         val messageQueue: ArrayBlockingQueue<String> = ArrayBlockingQueue(30)
-        private lateinit var tcpSocket: ServerSocket
-        private lateinit var clientSocket: Socket
-        private lateinit var clientOutputStream: OutputStream
+        private lateinit var tcpSocketIPv4: ServerSocket
 
         override fun run() {
             try {
-                tcpSocket = ServerSocket()
-                tcpSocket.reuseAddress = true
-                tcpSocket.bind(srcAddress)
-                tcpSocket.soTimeout = 500
-                while (!currentThread().isInterrupted) {
-                    while (true) {
-                        try {
-                            clientSocket = tcpSocket.accept()
-                            break
-                        }
-                        catch (e : SocketTimeoutException) {
-                            if (currentThread().isInterrupted) {
-                                exit()
-                                return
-                            }
-                            continue
-                        }
-                    }
-                    clientConnected.set(true)
-                    clientOutputStream = clientSocket.getOutputStream()
-                    var msg : String
-                    while (clientConnected.get()) {
-                        msg = messageQueue.take()
-                        try {
-                            clientOutputStream.write(msg.toByteArray())
-                        } catch (e: IOException) {
-                            Log.e(TAG, "client is not reachable")
-                            clientConnected.set(false)
-                            clientSocket.close()
-                        }
-                    }
-                }
+                val inetAddressIPv4 = InetAddress.getByName((srcAddress as InetSocketAddress).hostString)
+                val ipv4SocketAddress = InetSocketAddress(inetAddressIPv4, (srcAddress).port)
+                tcpSocketIPv4 = ServerSocket()
+                tcpSocketIPv4.reuseAddress = true
+                tcpSocketIPv4.bind(ipv4SocketAddress)
+                tcpSocketIPv4.soTimeout = 500
+
+                acceptConnections(tcpSocketIPv4)
+
                 exit()
                 return
             } catch (e: InterruptedException) {
-                //Log.i(TAG, "thread was interrupted")
+                    exit()
+                    return
+            } finally {
                 exit()
-                return
+            }
+        }
+
+        private fun acceptConnections(tcpSocket: ServerSocket) {
+            while (!currentThread().isInterrupted) {
+                try {
+                    val clientSocket = tcpSocket.accept()
+                    val clientThread = Thread {
+                        handleClientConnection(clientSocket)
+                    }
+                    clientThread.start()
+                } catch (e: SocketTimeoutException) {
+                    if (currentThread().isInterrupted) {
+                        return
+                    }
+                }
+            }
+        }
+
+        private fun handleClientConnection(clientSocket: Socket) {
+            val clientConnected = AtomicBoolean(true)
+            var clientOutputStream: OutputStream? = null
+            try {
+                clientOutputStream = clientSocket.getOutputStream()
+                var msg : String
+                while (clientConnected.get()) {
+                    msg = messageQueue.take()
+                    try {
+                        clientOutputStream?.write(msg.toByteArray())
+                        } catch (e: IOException) {
+                            Log.e(TAG, "client is not reachable")
+                            clientConnected.set(false)
+                            clientOutputStream?.close()
+                            clientSocket.close()
+                            return
+                        }
+                    }
+                } catch (e: InterruptedException) {
+                //Log.i(TAG, "thread was interrupted")
+                    try {
+                        clientOutputStream?.close()
+                        clientSocket.close()
+                        clientConnected.set(false)
+                        return
+                    } catch (e: IOException) {
+                        Log.e(TAG, "Error closing client socket")
+                    } finally {
+                        clientOutputStream?.close()
+                        clientSocket.close()
+                        clientConnected.set(false)
+                    }
             }
         }
         private fun exit() {
-            if (this::clientSocket.isInitialized) {
-                clientSocket.close()
+            if (this::tcpSocketIPv4.isInitialized) {
+                tcpSocketIPv4.close()
             }
-            tcpSocket.close()
-            clientConnected.set(false)
         }
     }
-
 
     override fun stop() {
         networkThread.interrupt()
     }
 
     override fun isReadyToSend(): Boolean {
-        return clientConnected.get()
+        return true
     }
 
     override fun send(data: String) {
