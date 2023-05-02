@@ -22,8 +22,8 @@ or get it from the [Releases section](https://github.com/project-kaat/gpsdRelay/
 
 The main tab has a button that starts the relay server.
 
-![main tab screenshot](./screenshots/main_tab.png)
+![main tab screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
 
 The settings tab contains all the available preferences.
 
-![settings tab screenshot](./screenshots/settings_tab.png)
+![settings tab screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)
