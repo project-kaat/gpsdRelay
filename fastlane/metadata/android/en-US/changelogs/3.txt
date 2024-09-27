@@ -1,0 +1,2 @@
+added support for autostart on boot
+added broadcast receiver for service control
