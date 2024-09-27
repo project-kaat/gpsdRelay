@@ -9,11 +9,9 @@ import androidx.preference.PreferenceManager
 class BootBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("bootBroadcastReceiver", "boot intent received")
         val app = context.applicationContext as gpsdrelay
         val prefs = PreferenceManager.getDefaultSharedPreferences(app)
         if (prefs.getBoolean(app.getString(R.string.settings_key_autostart_service), false)) {
-            Log.d("bootBroadcastReceiver", "autostart is enabled")
 
             val timeout = try {
                 prefs.getString(

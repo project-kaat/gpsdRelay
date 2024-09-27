@@ -9,7 +9,6 @@ class ServiceControlBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
 
-        Log.d("bastreceiver", "received intent. action = ${intent.action}")
         val app = context.applicationContext as gpsdrelay
 
         when (intent.action) {

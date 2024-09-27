@@ -1,9 +1,7 @@
 package io.github.project_kaat.gpsdrelay
 
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
@@ -11,14 +9,10 @@ import android.net.Network
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
-import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 internal class NetCallback(private val serverManager : NmeaServerManager) : NetworkCallback() {
     override fun onAvailable(network: Network) {
-        Log.d("netcallback", "default network became available")
         serverManager.networkAvailable.set(true)
     }
 }
