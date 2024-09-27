@@ -2,16 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="io.github.project_kaat.gpsdrelay"
-    android:versionCode="1"
-    android:versionName="1.1">
+    android:versionCode="3"
+    android:versionName="1.2">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_LOCATION"
+        android:minSdkVersion="34" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
+        android:name=".gpsdrelay"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,9 +26,30 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GpsdRelay"
-        tools:targetApi="31">
+        tools:targetApi="34">
+        <receiver
+            android:name=".BootBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".ServiceControlBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="@string/INTENT_ACTION_STOP_SERVICE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="@string/INTENT_ACTION_START_SERVICE" />
+            </intent-filter>
+        </receiver>
+
         <activity
-            android:name="io.github.project_kaat.gpsdrelay.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.GpsdRelay.NoActionBar">
             <intent-filter>
@@ -31,8 +58,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="io.github.project_kaat.gpsdrelay.nmeaServerService"
+
+        <service
+            android:name=".nmeaServerService"
             android:enabled="true"
-            android:exported="false"/>
+            android:exported="true"
+            android:foregroundServiceType="location" />
     </application>
+
 </manifest>

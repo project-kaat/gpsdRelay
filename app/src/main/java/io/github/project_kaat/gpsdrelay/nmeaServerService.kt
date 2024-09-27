@@ -50,7 +50,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         // API level 24-30 doesn't support Location.isMock() for this functionality
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
             for (provider in providers) {
-                if (p0.isFromMockProvider()) {
+                if (p0.isFromMockProvider) {
                     return true
                 }
             }
@@ -282,6 +282,8 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     if (intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
 
+        Log.d(TAG, "Service is starting")
+
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
         sendInterval = prefs.getString(getString(R.string.settings_key_sync_interval), getString(
@@ -316,7 +318,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
         }
     else {
-        //Log.i(TAG, "Service is stopping")
+        Log.d(TAG, "Service is stopping")
         stopSelf()
         stopForeground(true)
         return START_NOT_STICKY

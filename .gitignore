@@ -1,5 +1,6 @@
 push.sh
-app/release
+app/release/
+.idea/
 # Built application files
 *.apk
 *.aar

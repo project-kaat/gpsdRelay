@@ -12,6 +12,21 @@
     <string name="main_stop_button_text">Stop server</string>
     <string name="main_current_ip_title">Server bound to IP</string>
 
+    <string name="main_automation_description">There are 2 main automation options for this service.\n
+    1. Autostart checkbox in the preferences app.\n
+    2. Broadcast receiver named ServiceControlBroadcastReceiver.\n
+    \n
+    The checkbox will make the service start when the device boots to lockscreen and the default network becomes available\n
+        <b>It also has a timeout value, after which the app will exit if the network doesn\'t become available in time.\n</b>
+    \n
+    The broadcast receiver endpoint can receive 2 intent actions\n
+    \t    • io.github.project_kaat.action.STOP_SERVICE\n
+    \t    • io.github.project_kaat.action.START_SERVICE\n
+    \n
+    These can be sent even if the app is not running and the service will start.\n
+        <b>The service won\'t start while the application itself is not in foreground if the device is running Android 12 and above.</b>
+    </string>
+
     #SETTINGS TAB
 
     <string name="settings_server_type_title">Server type</string>
@@ -40,6 +55,12 @@
 
     <string name="settings_relay_nmea_title">Relay GPS chipset NMEA messages</string>
     <string name="settings_relay_nmea_description">(Could be unreliable)</string>
+    
+    <string name="settings_autostart_service_title">Autostart service when the device boots</string>
+    <string name="settings_autostart_service_description">(Will wait for the default network connection)</string>
+
+    <string name="settings_autostart_timeout_title">Autostart timeout</string>
+    <string name="settings_autostart_timeout_description">(seconds) how long to wait for network availability on autostart</string>
 
     #SERVICE NOTIFICATION
 
@@ -54,6 +75,7 @@
     <string name="settings_ipp_dst_default">6000</string>
     <string name="settings_sync_interval_default">1000</string>
     <string name="settings_server_type_default">UDP</string>
+    <string name="settings_autostart_timeout_default">120</string>
 
     #SETTINGS STORAGE KEYS
 
@@ -65,14 +87,12 @@
     <string name="settings_key_server_type">settings_key_server_type</string>
     <string name="settings_key_generate_nmea">settings_key_generate_nmea</string>
     <string name="settings_key_relay_nmea">settings_key_relay_nmea</string>
+    <string name="settings_key_autostart_service">settings_key_autostart_service</string>
+    <string name="settings_key_autostart_timeout">settings_key_autostart_timeout</string>
 
     #INTENT ACTIONS
 
-    <string name="INTENT_ACTION_STOP_SERVICE">STOP SERVICE</string>
-    <string name="INTENT_ACTION_START_SERVICE">START SERVICE</string>
-
-    #LOG TAGS
-
-    <string name="LOG_TAG_SERVICE_THREAD">GPSDRELAY_SERVICE_THREAD</string>
+    <string name="INTENT_ACTION_STOP_SERVICE">io.github.project_kaat.action.STOP_SERVICE</string>
+    <string name="INTENT_ACTION_START_SERVICE">io.github.project_kaat.action.START_SERVICE</string>
 
 </resources>

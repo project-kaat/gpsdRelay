@@ -49,4 +49,16 @@
         app:title="@string/settings_relay_nmea_title"
         app:summary="@string/settings_relay_nmea_description" />
 
+    <CheckBoxPreference
+        app:key="@string/settings_key_autostart_service"
+        app:title="@string/settings_autostart_service_title"
+        app:summary="@string/settings_autostart_service_description" />
+
+    <EditTextPreference
+        app:key="@string/settings_key_autostart_timeout"
+        app:title="@string/settings_autostart_timeout_title"
+        app:summary="@string/settings_autostart_timeout_description"
+        app:defaultValue="@string/settings_autostart_timeout_default"
+        app:dependency="@string/settings_key_autostart_service"/>
+
 </PreferenceScreen>
