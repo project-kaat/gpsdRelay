@@ -293,6 +293,9 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         ))!!.toLong()
         generateOwnNMEA = prefs.getBoolean(getString(R.string.settings_key_generate_nmea), false)
         relayNMEA = prefs.getBoolean(getString(R.string.settings_key_relay_nmea), false)
+        if (!generateOwnNMEA && !relayNMEA) {
+            Toast.makeText(this, "Neither NMEA generation, nor relaying is enabled in the preferences. Service will not do anything useful", Toast.LENGTH_LONG).show()
+        }
         startSelfForeground()
         when (prefs.getString(getString(R.string.settings_key_server_type), getString(R.string.settings_server_type_default))) {
             "TCP" ->
@@ -364,12 +367,14 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     private fun enableLocationUpdates() {
     try {
-        locationManager.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER,
-            sendInterval,
-            0f,
-            this
-        )
+        if (generateOwnNMEA) {
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                sendInterval,
+                0f,
+                this
+            )
+        }
         if (relayNMEA) {
             locationManager.addNmeaListener(this, null)
         }
@@ -381,10 +386,12 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 }
 
     private fun disableLocationUpdates() {
-    locationManager.removeUpdates(this)
-    if (relayNMEA) {
-        locationManager.removeNmeaListener(this)
-    }
+        if (generateOwnNMEA) {
+            locationManager.removeUpdates(this)
+        }
+        if (relayNMEA) {
+            locationManager.removeNmeaListener(this)
+        }
 
-}
+    }
 }
