@@ -43,6 +43,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'io.github.project_kaat.gpsdrelay'
 }
 
 dependencies {

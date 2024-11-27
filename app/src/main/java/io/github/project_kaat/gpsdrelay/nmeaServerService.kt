@@ -73,7 +73,9 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     private fun timestampToUTC(timeMS : Long) : Array<String> {
 
-        val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00", Locale.US)
+        val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00", Locale.US).also {
+            it.timeZone = TimeZone.getTimeZone("UTC")
+        }
         val datetimeString = datetimeFormat.format(Date(timeMS))
         return arrayOf(datetimeString.substringBefore('-'), datetimeString.substringAfter('-'))
     }
