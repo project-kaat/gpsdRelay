@@ -1,0 +1,2 @@
+fix logic errors related to checkboxes in settings
+fix timestamps in the generated NMEA messages being in localtime instead of UTC
