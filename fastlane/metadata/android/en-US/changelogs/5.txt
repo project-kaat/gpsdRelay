@@ -1,0 +1,5 @@
+new ui in Compose
+support for independent combinations of multiple UDP and TCP servers
+targeting Android 15
+improved autostart
+improved permission handling
