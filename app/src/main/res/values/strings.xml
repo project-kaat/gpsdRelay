@@ -3,96 +3,77 @@
     #GENERAL
 
     <string name="app_name">gpsdRelay</string>
-    <string name="tab_main_title">Main</string>
-    <string name="tab_settings_title">Settings</string>
-
-    #MAIN TAB
-
-    <string name="main_start_button_text">Start server</string>
-    <string name="main_stop_button_text">Stop server</string>
-    <string name="main_current_ip_title">Server bound to IP</string>
-
-    <string name="main_automation_description">There are 2 main automation options for this service.\n
-    1. Autostart checkbox in the preferences app.\n
-    2. Broadcast receiver named ServiceControlBroadcastReceiver.\n
-    \n
-    The checkbox will make the service start when the device boots to lockscreen and the default network becomes available\n
-        <b>It also has a timeout value, after which the app will exit if the network doesn\'t become available in time.\n</b>
-    \n
-    The broadcast receiver endpoint can receive 2 intent actions\n
-    \t    • io.github.project_kaat.action.STOP_SERVICE\n
-    \t    • io.github.project_kaat.action.START_SERVICE\n
-    \n
-    These can be sent even if the app is not running and the service will start.\n
-        <b>The service won\'t start while the application itself is not in foreground if the device is running Android 12 and above.</b>
-    </string>
-
-    #SETTINGS TAB
-
-    <string name="settings_server_type_title">Server type</string>
-    <string name="settings_server_type_description">Which protocol to use for data transmission</string>
-
-    <string name="settings_ip_address_src_title">Source IP address</string>
-    <string name="settings_ip_address_src_description">Address to listen on / send from</string>
-    <string name="settings_ip_port_src_title">Source Port</string>
-    <string name="settings_ip_port_src_description">Port to listen on / send from</string>
-    <string name="settings_ip_address_dst_title">Destination IP address</string>
-    <string name="settings_ip_address_dst_description">Address to send to (ignored if TCP)</string>
-    <string name="settings_ip_port_dst_title">Destination Port</string>
-    <string name="settings_ip_port_dst_description">Port to send to (ignored if TCP)</string>
-
-    <string name="settings_sync_interval_title">NMEA generation interval</string>
-    <string name="settings_sync_interval_description">(milliseconds) not applicable to relayed NMEA messages</string>
-    <string name="settings_sync_interval_hint">Default is 1000ms</string>
-
-    <string-array name="settings_server_type_value_list">
-        <item name="settings_server_type_value_tcp">TCP</item>
-        <item name="settings_server_type_value_udp">UDP</item>
-    </string-array>
-
-    <string name="settings_generate_nmea_title">Generate own NMEA messages</string>
-    <string name="settings_generate_nmea_description">(relays GNGGA and GNVTG from mockGPS, otherwise generates only GPRMC)</string>
-
-    <string name="settings_relay_nmea_title">Relay GPS chipset NMEA messages</string>
-    <string name="settings_relay_nmea_description">(Could be unreliable)</string>
-    
-    <string name="settings_autostart_service_title">Autostart service when the device boots</string>
-    <string name="settings_autostart_service_description">(Will wait for the default network connection)</string>
-
-    <string name="settings_autostart_timeout_title">Autostart timeout</string>
-    <string name="settings_autostart_timeout_description">(seconds) how long to wait for network availability on autostart</string>
+    <string name="db_name">gpsdrelay-database</string>
 
     #SERVICE NOTIFICATION
 
-    <string name="notification_channel_name">NMEA relay over TCP service</string>
+    <string name="notification_channel_name">NMEA relay service</string>
     <string name="notification_service_running">NMEA relay is running</string>
-
-    #SETTINGS DEFAULT_VALUES
-
-    <string name="settings_ipa_src_default">0.0.0.0</string>
-    <string name="settings_ipp_src_default">6000</string>
-    <string name="settings_ipa_dst_default">192.168.1.255</string>
-    <string name="settings_ipp_dst_default">6000</string>
-    <string name="settings_sync_interval_default">1000</string>
-    <string name="settings_server_type_default">UDP</string>
-    <string name="settings_autostart_timeout_default">120</string>
-
-    #SETTINGS STORAGE KEYS
-
-    <string name="settings_key_ipa_src">settings_key_ipa_src</string>
-    <string name="settings_key_ipp_src">settings_key_ipp_src</string>
-    <string name="settings_key_ipa_dst">settings_key_ipa_dst</string>
-    <string name="settings_key_ipp_dst">settings_key_ipp_dst</string>
-    <string name="settings_key_sync_interval">settings_key_sync_interval</string>
-    <string name="settings_key_server_type">settings_key_server_type</string>
-    <string name="settings_key_generate_nmea">settings_key_generate_nmea</string>
-    <string name="settings_key_relay_nmea">settings_key_relay_nmea</string>
-    <string name="settings_key_autostart_service">settings_key_autostart_service</string>
-    <string name="settings_key_autostart_timeout">settings_key_autostart_timeout</string>
 
     #INTENT ACTIONS
 
     <string name="INTENT_ACTION_STOP_SERVICE">io.github.project_kaat.action.STOP_SERVICE</string>
     <string name="INTENT_ACTION_START_SERVICE">io.github.project_kaat.action.START_SERVICE</string>
 
+
+    #Main Screen
+
+    <string name="start_service_icon_description">start service</string>
+    <string name="stop_service_icon_description">stop service</string>
+    <string name="settings_icon_description">settings</string>
+    <string name="add_icon_description">add server</string>
+
+    <string name="udp_server">UDP Server</string>
+    <string name="tcp_server">TCP Server</string>
+
+    <string name="bg_location_permission_rationale">Please select "Allow all the time" to grant background location permission</string>
+
+    <string name="no_servers_placeholder">Use the floating \'+\' button to add servers</string>
+
+    #Add Server Dialog
+
+    <string name="add_server">Add %s</string>
+
+    <string name="add_dialog_ipv4_title">IPv4</string>
+    <string name="add_dialog_port_title">Port</string>
+
+    <string name="add_dialog_ipv4_placeholder">Listening address (%s)</string>
+    <string name="add_dialog_port_placeholder">Listening port (%s)</string>
+    <string name="add_dialog_placeholder_tcp">local</string>
+    <string name="add_dialog_placeholder_udp">remote</string>
+
+    <string name="add_dialog_enable_relaying_title">NMEA relaying</string>
+    <string name="add_dialog_enable_generation_title">NMEA generation</string>
+
+    <string name="add_dialog_invalid_data">Server data is invalid</string>
+    <string name="add_dialog_add_button_text">Add</string>
+
+    #Main Screen Server Submenu
+
+    <string name="server_menu_collapse_icon_description">collapse server element</string>
+
+    #Setting Screen
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_apply_button_text">Apply</string>
+
+    <string name="settings_failed_to_apply">Failed to apply settings!</string>
+
+    <string name="settings_generation_interval_title">NMEA generation interval (ms)</string>
+    <string name="settings_autostart_title">Start service when Android boots</string>
+    <string name="settings_autostart_timeout_title">Autostart timeout (s)</string>
+
+    <string name="settings_lockscreen_warning">gpsdRelay will only autostart after the device is unlocked for the first time</string>
+
+    #Server Manager
+
+    <string name="manager_permissions_required_pre_10">gpsdRelay requires FINE/COARSE location permission!</string>
+    <string name="manager_permissions_required">gpsdRelay requires FINE/COARSE location permission and BACKGROUND location permission!</string>
+    <string name="manager_service_already_running">Can\'t start gpsdRelay service as it seems to be already running</string>
+    <string name="manager_service_already_stopped">Can\'t stop gpsdRelay service as it seems to be already stopped</string>
+    <string name="manager_gps_not_enabled">Can\'t start gpsdRelay service with GPS disabled</string>
+
+    #Server Service
+
+    <string name="service_gps_denied">gpsdRelay not authorized to use GPS</string>
 </resources>

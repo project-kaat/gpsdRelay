@@ -1,22 +1,25 @@
-package io.github.project_kaat.gpsdrelay
+package io.github.project_kaat.gpsdrelay.network
 
 import android.util.Log
+import io.github.project_kaat.gpsdrelay.database.Server
 import java.io.IOException
 import java.io.OutputStream
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4PortSrc : String) :
+class tcpSocketServer (private val server : Server) :
     SocketServerInterface {
 
     private val TAG = "tcpSocketServer"
     private lateinit var networkThread : NetworkThread
 
+    private var connected = false
+
     override fun start() {
         val src : InetSocketAddress
         try {
-            src = InetSocketAddress(ipv4AddressSrc, ipv4PortSrc.toInt())
+            src = InetSocketAddress(server.ipv4, server.port)
         }
         catch (e : UnknownHostException) {
             Log.e(TAG, "Invalid ip AND/OR port supplied")
@@ -26,8 +29,12 @@ class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4Port
         networkThread.start()
     }
 
+    override fun isConnected(): Boolean {
+        return connected
+    }
 
-    private class NetworkThread(private val srcAddress : SocketAddress) : Thread() {
+
+    private inner class NetworkThread(private val srcAddress : SocketAddress) : Thread() {
         private val TAG = "tcpSocketServer.NetworkThread"
         val messageQueue: ArrayBlockingQueue<String> = ArrayBlockingQueue(30)
         private lateinit var tcpSocketIPv4: ServerSocket
@@ -57,12 +64,14 @@ class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4Port
             while (!currentThread().isInterrupted) {
                 try {
                     val clientSocket = tcpSocket.accept()
+                    connected = true
                     val clientThread = Thread {
                         handleClientConnection(clientSocket)
                     }
                     clientThread.start()
                 } catch (e: SocketTimeoutException) {
                     if (currentThread().isInterrupted) {
+                        connected = false
                         return
                     }
                 }
@@ -114,12 +123,14 @@ class tcpSocketServer (private val ipv4AddressSrc : String, private val ipv4Port
         networkThread.interrupt()
     }
 
-    override fun isReadyToSend(): Boolean {
-        return true
-    }
-
-    override fun send(data: String) {
-        if (!networkThread.messageQueue.offer(data)) {
+    override fun send(msg : OutgoingMessage) {
+        if (!server.relayingEnabled && !msg.isGenerated) {
+            return
+        }
+        if (!server.generationEnabled && msg.isGenerated) {
+            return
+        }
+        if (!networkThread.messageQueue.offer(msg.data)) {
             Log.e(TAG, "Can't insert data into MessageQueue")
         }
     }

@@ -3,13 +3,12 @@ package io.github.project_kaat.gpsdrelay
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
 class ServiceControlBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
 
-        val app = context.applicationContext as gpsdrelay
+        val app = context.applicationContext as gpsdRelay
 
         when (intent.action) {
             context.getString(R.string.INTENT_ACTION_START_SERVICE) -> {

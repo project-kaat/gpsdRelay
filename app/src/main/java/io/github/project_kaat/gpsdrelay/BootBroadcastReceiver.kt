@@ -4,26 +4,40 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.preference.PreferenceManager
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class BootBroadcastReceiver : BroadcastReceiver() {
+    private val TAG = "BootBroadcastReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
-        val app = context.applicationContext as gpsdrelay
-        val prefs = PreferenceManager.getDefaultSharedPreferences(app)
-        if (prefs.getBoolean(app.getString(R.string.settings_key_autostart_service), false)) {
 
-            val timeout = try {
-                prefs.getString(
-                    app.getString(R.string.settings_key_autostart_timeout),
-                    app.getString(R.string.settings_autostart_timeout_default)
-                )!!.toInt()
-            } catch (ignore : Exception) {
-                app.getString(R.string.settings_autostart_timeout_default).toInt()
-            }
+        Log.d(TAG, "onReceive START")
 
-            app.serverManager.awaitConnectionAndStartService(timeout)
+        var autostartEnabled = false
+        var autostartTimeout = 0
+
+        runBlocking() {
+            GlobalScope.launch() {
+                Log.d(TAG, "launched coroutine")
+                val settings =
+                    (context.applicationContext as gpsdRelay).gpsdRelayDatabase.settingsDao.getSettings().first()[0]
+
+                autostartEnabled = settings.autostartEnabled
+                autostartTimeout = settings.autostartNetworkTimeoutS
+
+            }.join()
         }
+
+        if (autostartEnabled) {
+
+            Log.d(TAG, "autostart is enabled")
+            (context.applicationContext as gpsdRelay).serverManager.awaitConnectionAndStartService(autostartTimeout)
+            Log.d(TAG, "service autostarted")
+        }
+
 
     }
 }
