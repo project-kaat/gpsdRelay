@@ -292,9 +292,9 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-    if (intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
+    if (intent == null || intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
 
         Log.d(TAG, "Service is starting")
 
