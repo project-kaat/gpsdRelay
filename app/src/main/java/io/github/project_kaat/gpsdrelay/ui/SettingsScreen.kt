@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.project_kaat.gpsdrelay.database.SettingsDao
 import kotlinx.coroutines.launch
 import io.github.project_kaat.gpsdrelay.R
@@ -50,6 +51,7 @@ fun SettingsScreen(settingsDao : SettingsDao) {
     var generationIntervalTmp by remember {mutableStateOf(settings[0].nmeaGenerationIntervalMs.toString())}
     var autoStartEnabledTmp by remember {mutableStateOf(settings[0].autostartEnabled)}
     var autoStartTimeoutTmp by remember {mutableStateOf(settings[0].autostartNetworkTimeoutS.toString())}
+    var includeFilterTmp by remember {mutableStateOf(settings[0].nmeaIncludeFilter)}
 
     var mutated by remember {mutableStateOf(false)}
 
@@ -72,7 +74,8 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                                         1,
                                         autoStartEnabledTmp,
                                         autoStartTimeoutTmp.toInt(),
-                                        generationIntervalTmp.toLong()
+                                        generationIntervalTmp.toLong(),
+                                        nmeaIncludeFilter = includeFilterTmp
                                     )
                                 )
                             } catch (e : Exception) {
@@ -101,7 +104,6 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                     mutated = true
                     generationIntervalTmp = it
                 })
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.settings_autostart_title))
                 Checkbox(checked = autoStartEnabledTmp, onCheckedChange = {
@@ -125,10 +127,22 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                     mutated = true
                     autoStartTimeoutTmp = it
                 })
-
-
-
+            Text(
+                text = stringResource(R.string.settings_nmea_include_filter_header),
+                fontSize = 14.sp
+            )
+            Text(
+                text = stringResource(R.string.settings_nmea_include_filter_sub_header),
+                fontSize = 12.sp
+            )
+            OutlinedTextField(
+                label = { Text(stringResource(R.string.settings_nmea_include_filter)) },
+                value = includeFilterTmp,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                onValueChange = {
+                    mutated = true
+                    includeFilterTmp = it
+                })
         }
     }
-
 }

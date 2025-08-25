@@ -32,7 +32,8 @@ class gpsdRelay : Application() {
                 1,
                 false,
                 60,
-                1000
+                1000,
+                ""
             )
         )
 

@@ -13,7 +13,8 @@ data class Settings(
     val id: Int,
     val autostartEnabled : Boolean,
     val autostartNetworkTimeoutS : Int,
-    val nmeaGenerationIntervalMs : Long
+    val nmeaGenerationIntervalMs : Long,
+    val nmeaIncludeFilter : String
 )
 
 @Dao

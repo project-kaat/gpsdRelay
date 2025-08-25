@@ -38,7 +38,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private var sendInterval : Long = 0
     private var isMockLocation : Boolean = false
     private val serverList : MutableList<SocketServerInterface> = mutableListOf()
-
+    private val nmeaIncludeFilter : MutableList<String> = mutableListOf()
 
     override fun onCreate() {
         super.onCreate()
@@ -283,13 +283,18 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
     override fun onNmeaMessage(p0: String?, p1: Long) {
         //Log.i("SERVICE", "nmea message received: ${p0}")
-        if (p0 != null) {
+
+        if (p0 != null && filterContainsNmeaType(p0)) {
             serverList.forEach() {
                 if (it.isConnected()) {
                     it.send(OutgoingMessage(isGenerated = false, p0))
                 }
             }
         }
+    }
+
+    private fun filterContainsNmeaType(nmeaMessage: String) : Boolean {
+        return nmeaIncludeFilter.any { it in nmeaMessage }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -319,6 +324,11 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
                 if (udpEnabled.isNotEmpty()) {
                     serverList += udpSocketServer(udpEnabled)
                 }
+
+                val settings = database.settingsDao.getSettings().first()[0]
+                val includeFilter = settings.nmeaIncludeFilter.split(",")
+
+                includeFilter.forEach { filter -> nmeaIncludeFilter.add(filter) }
             }.join()
         }
 

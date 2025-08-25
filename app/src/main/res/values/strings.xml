@@ -62,6 +62,9 @@
     <string name="settings_generation_interval_title">NMEA generation interval (ms)</string>
     <string name="settings_autostart_title">Start service when Android boots</string>
     <string name="settings_autostart_timeout_title">Autostart timeout (s)</string>
+    <string name="settings_nmea_include_filter_header">Specify a comma separated list of NMEA types to relay</string>
+    <string name="settings_nmea_include_filter_sub_header">For example: \"GPRMC,GPGGA\", an empty list relays all types</string>
+    <string name="settings_nmea_include_filter">NMEA message type to relay</string>
 
     <string name="settings_lockscreen_warning">gpsdRelay will only autostart after the device is unlocked for the first time</string>
 
