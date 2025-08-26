@@ -284,7 +284,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     override fun onNmeaMessage(p0: String?, p1: Long) {
         //Log.i("SERVICE", "nmea message received: ${p0}")
 
-        if (p0 != null && filterContainsNmeaType(p0)) {
+        if (p0 != null && (nmeaIncludeFilter.isEmpty() || filterContainsNmeaType(p0))) {
             serverList.forEach() {
                 if (it.isConnected()) {
                     it.send(OutgoingMessage(isGenerated = false, p0))
@@ -325,6 +325,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
                     serverList += udpSocketServer(udpEnabled)
                 }
 
+                nmeaIncludeFilter.clear()
                 val settings = database.settingsDao.getSettings().first()[0]
                 val includeFilter = settings.nmeaIncludeFilter.split(",")
 
