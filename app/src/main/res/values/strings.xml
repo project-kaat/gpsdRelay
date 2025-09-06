@@ -23,7 +23,6 @@
     <string name="settings_icon_description">settings</string>
     <string name="add_icon_description">add server</string>
 
-    <string name="broadcast_server">Select Broadcast interface</string>
     <string name="udp_server">UDP Server</string>
     <string name="tcp_server">TCP Server</string>
 
@@ -48,7 +47,11 @@
 
     <string name="add_dialog_invalid_data">Server data is invalid</string>
     <string name="add_dialog_add_button_text">Add</string>
-    <string name="add_dialog_add_broadcast_button_text">Broadcast address</string>
+    <string name="add_dialog_add_broadcast_button_text">Select broadcast</string>
+
+    #Add Broadcast Server Dialog
+
+    <string name="add_broadcast_dialog_title">Select broadcast address</string>
 
     #Main Screen Server Submenu
 
