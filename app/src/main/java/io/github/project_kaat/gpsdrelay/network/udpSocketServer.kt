@@ -40,26 +40,35 @@ class udpSocketServer(servers : List<Server>) :
                     val msg = messageQueue.take()
                     try {
                         if (msg.isGenerated) {
-                            generatedMsgSubscribers.forEach( {
-                                udpSocket.send(DatagramPacket(msg.data.toByteArray(), msg.data.length,
-                                    InetSocketAddress(it.ipv4, it.port)))
-                            })
+                            generatedMsgSubscribers.forEach {
+                                udpSocket.send(
+                                    DatagramPacket(
+                                        msg.data.toByteArray(), msg.data.length,
+                                        InetSocketAddress(it.ipv4, it.port)
+                                    )
+                                )
+                            }
                         }
                         else {
-                            relayedMsgSubscribers.forEach( {
-                                udpSocket.send(DatagramPacket(msg.data.toByteArray(), msg.data.length,
-                                    InetSocketAddress(it.ipv4, it.port)))
+                            relayedMsgSubscribers.forEach {
+                                if (isMessageAllowedByFilter(msg, it.relayFilter)) {
+                                    udpSocket.send(
+                                        DatagramPacket(
+                                            msg.data.toByteArray(), msg.data.length,
+                                            InetSocketAddress(it.ipv4, it.port)
+                                        )
+                                    )
+                                }
                             }
-                            )
                         }
-                    } catch (e: IOException) {
+                    } catch (_: IOException) {
                         Log.e(TAG, "client is not reachable")
                         exit()
                     }
                 }
                 exit()
             }
-            catch (e : InterruptedException) {
+            catch (_ : InterruptedException) {
                 //Log.i(TAG, "thread was interrupted")
                 exit()
             }
@@ -73,8 +82,8 @@ class udpSocketServer(servers : List<Server>) :
 
     }
 
-    override fun send(data : OutgoingMessage){
-        if (!networkThread.messageQueue.offer(data)) {
+    override fun send(message : OutgoingMessage){
+        if (!networkThread.messageQueue.offer(message)) {
             Log.e(TAG, "Can't insert data into MessageQueue")
         }
     }

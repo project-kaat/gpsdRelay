@@ -127,7 +127,6 @@ fun MainScreen(dao : ServerDao) {
                         }
                     }
 
-                    //three dots navigation button
                     FilledIconButton(shape = RoundedCornerShape(10.dp), onClick = {
                         ctx.startActivity((Intent(ctx, SettingsActivity::class.java)))
                     }) {
@@ -150,6 +149,7 @@ fun MainScreen(dao : ServerDao) {
                         onClick = {
                             addingServerType = GpsdServerType.UDP
                             showingAddServerDialog = true
+                            fabMenuExpanded = false
                         }
                     )
                     DropdownMenuItem(
@@ -157,6 +157,7 @@ fun MainScreen(dao : ServerDao) {
                         onClick = {
                             addingServerType = GpsdServerType.TCP
                             showingAddServerDialog = true
+                            fabMenuExpanded = false
                         }
                     )
                 }

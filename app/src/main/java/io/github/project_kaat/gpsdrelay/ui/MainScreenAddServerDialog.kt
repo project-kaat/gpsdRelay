@@ -107,7 +107,16 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
         },
         confirmButton = {
             Button(onClick = {
-                val newServer = Server.validateAndCreate(serverType, ipv4temp, porttemp, relayingEnabledTemp, generationEnabledTemp, System.currentTimeMillis(), false)
+                val newServer = Server.validateAndCreate(
+                    serverType,
+                    ipv4temp,
+                    porttemp,
+                    relayingEnabledTemp,
+                    generationEnabledTemp,
+                    System.currentTimeMillis(),
+                    false,
+                    emptyList()
+                )
                 if (newServer == null) {
                     Toast.makeText(
                         ctx,
