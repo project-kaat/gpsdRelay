@@ -129,7 +129,16 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
                 }
             }
                 Button(onClick = {
-                    val newServer = Server.validateAndCreate(serverType, ipv4temp, porttemp, relayingEnabledTemp, generationEnabledTemp, System.currentTimeMillis(), false)
+                    val newServer = Server.validateAndCreate(
+                        serverType,
+                        ipv4temp,
+                        porttemp,
+                        relayingEnabledTemp,
+                        generationEnabledTemp,
+                        System.currentTimeMillis(),
+                        false,
+                        emptyList()
+                    )
                     if (newServer == null) {
                         Toast.makeText(
                             ctx,
@@ -149,35 +158,6 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
                 }
             }
         }
-        /*confirmButton = {
-            Button(onClick = {
-                val newServer = Server.validateAndCreate(
-                    serverType,
-                    ipv4temp,
-                    porttemp,
-                    relayingEnabledTemp,
-                    generationEnabledTemp,
-                    System.currentTimeMillis(),
-                    false,
-                    emptyList()
-                )
-                if (newServer == null) {
-                    Toast.makeText(
-                        ctx,
-                        ctx.getString(R.string.add_dialog_invalid_data),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                else {
-                    scope.launch() {
-                        dao.upsert(newServer)
-                    }
-                    onDismiss()
-                }
-            }) {
-                Text(stringResource(R.string.add_dialog_add_button_text))
-            }
-        })*/
     )
 
     if (showAddBroadcastServerDialog) {
