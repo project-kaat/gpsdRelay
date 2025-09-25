@@ -18,6 +18,7 @@ or get it from the [Releases section](https://github.com/project-kaat/gpsdRelay/
 
 ### Screenshots
 
-![main screen screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png =360x800)
-
-![settings screen screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/2.png =360x800)
+<p>
+<img src="https://raw.githubusercontent.com/project-kaat/gpsdRelay/refs/heads/master/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="main screen screenshot" width="360" height="800"/>
+<img src="https://raw.githubusercontent.com/project-kaat/gpsdRelay/refs/heads/master/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="settings screen screenshot" width="360" height="800"/>
+</p>
