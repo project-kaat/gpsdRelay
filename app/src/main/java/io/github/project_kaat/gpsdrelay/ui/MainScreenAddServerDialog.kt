@@ -14,6 +14,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +35,7 @@ import io.github.project_kaat.gpsdrelay.database.Server
 import io.github.project_kaat.gpsdrelay.database.ServerDao
 import kotlinx.coroutines.launch
 import io.github.project_kaat.gpsdrelay.R
+import org.intellij.lang.annotations.JdkConstants
 import java.net.NetworkInterface
 
 @Composable
@@ -48,61 +50,6 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
     var relayingEnabledTemp by remember {mutableStateOf(true)}
     var generationEnabledTemp by remember {mutableStateOf(true)}
     var showAddBroadcastServerDialog by remember {mutableStateOf(false)}
-    data class BroadcastNetworksType(val networkType: String, val broadcastAddress: String)
-    val broadcastInterfaces = mutableListOf<BroadcastNetworksType>()
-
-    if (showAddBroadcastServerDialog) {
-
-        //Build a list if all broadcast capable interfaces
-        val interfaces = NetworkInterface.getNetworkInterfaces()
-        while (interfaces.hasMoreElements()) {
-            val networkInterface = interfaces.nextElement()
-            if (networkInterface.isUp && !networkInterface.isLoopback) {
-                for (interfaceAddress in networkInterface.interfaceAddresses) {
-                    val broadcast = interfaceAddress.broadcast
-
-                    if (broadcast != null) {
-                        val broadcastAddress = broadcast.toString().substring(1)
-                        broadcastInterfaces.add(
-                            BroadcastNetworksType(
-                                networkInterface.displayName, broadcastAddress
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        AlertDialog(
-            onDismissRequest = { showAddBroadcastServerDialog = false },
-            title = { Text(stringResource(R.string.broadcast_server), fontSize = 18.sp) },
-
-            text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    LazyColumn {
-                        items(broadcastInterfaces) { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        ipv4temp =
-                                            item.broadcastAddress; showAddBroadcastServerDialog =
-                                        false
-                                    }
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(text = item.networkType)
-                                Text(text = item.broadcastAddress)
-                            }
-                            HorizontalDivider()
-                        }
-                    }
-                }
-            },
-            confirmButton = {}
-        )
-    }
 
     AlertDialog( onDismissRequest = onDismiss,
         title = {
@@ -172,16 +119,37 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
                 }
             }
         },
-        dismissButton = {
-            if(GpsdServerType.UDP == serverType) {
-                Button(onClick = {
+        confirmButton = {
+            Column(horizontalAlignment = Alignment.End) {
+            if (GpsdServerType.UDP == serverType) {
+                OutlinedButton(onClick = {
                     showAddBroadcastServerDialog = true;
                 }) {
                     Text(stringResource(R.string.add_dialog_add_broadcast_button_text))
                 }
             }
-        },
-        confirmButton = {
+                Button(onClick = {
+                    val newServer = Server.validateAndCreate(serverType, ipv4temp, porttemp, relayingEnabledTemp, generationEnabledTemp, System.currentTimeMillis(), false)
+                    if (newServer == null) {
+                        Toast.makeText(
+                            ctx,
+                            ctx.getString(R.string.add_dialog_invalid_data),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    else {
+                        scope.launch() {
+                            dao.upsert(newServer)
+                        }
+                        onDismiss()
+                    }
+                },
+                    enabled = (ipv4temp.isNotBlank() && porttemp.isNotBlank())) {
+                    Text(stringResource(R.string.add_dialog_add_button_text))
+                }
+            }
+        }
+        /*confirmButton = {
             Button(onClick = {
                 val newServer = Server.validateAndCreate(serverType, ipv4temp, porttemp, relayingEnabledTemp, generationEnabledTemp, System.currentTimeMillis(), false)
                 if (newServer == null) {
@@ -200,5 +168,70 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
             }) {
                 Text(stringResource(R.string.add_dialog_add_button_text))
             }
-        })
+        })*/
+    )
+
+    if (showAddBroadcastServerDialog) {
+        AddBroadcastServerDialog(
+            onAddressSelected = {
+                ipv4temp = it
+                showAddBroadcastServerDialog = false
+            },
+            onDismiss = {
+                showAddBroadcastServerDialog = false
+            }
+        )
+    }
+}
+
+data class BroadcastNetworkAddressElement(val interfaceName : String, val ipv4 : String)
+
+@Composable
+fun AddBroadcastServerDialog(onAddressSelected : (String) -> Unit, onDismiss: () -> Unit) {
+
+    val broadcastInterfaces : MutableList<BroadcastNetworkAddressElement> = mutableListOf()
+
+    val interfaces = NetworkInterface.getNetworkInterfaces()
+    for (iface in interfaces) {
+        if (iface.isUp && !iface.isLoopback) {
+            for (interfaceAddress in iface.interfaceAddresses) {
+                val broadcast = interfaceAddress.broadcast
+                if (interfaceAddress.broadcast != null) {
+                    broadcastInterfaces += BroadcastNetworkAddressElement(
+                        iface.displayName,
+                        broadcast.toString().substring(1)
+                    )
+                }
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.add_broadcast_dialog_title), fontSize = 18.sp) },
+
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                LazyColumn {
+                    items(broadcastInterfaces) { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onAddressSelected(item.ipv4)
+                                }
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = item.interfaceName)
+                            Text(text = item.ipv4)
+                        }
+                        HorizontalDivider()
+                    }
+                }
+            }
+        },
+        confirmButton = {}
+    )
+
 }
