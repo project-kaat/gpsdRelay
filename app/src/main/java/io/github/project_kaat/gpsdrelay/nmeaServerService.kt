@@ -118,7 +118,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
             }
         }
 
-        return checksum.toString(16)
+        return String.format("%02X", checksum)
     }
 
     private fun getGNGGA(p0 : Location) : String {
