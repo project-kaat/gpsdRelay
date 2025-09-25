@@ -21,6 +21,7 @@ import io.github.project_kaat.gpsdrelay.network.OutgoingMessage
 import io.github.project_kaat.gpsdrelay.network.SocketServerInterface
 import io.github.project_kaat.gpsdrelay.network.tcpSocketServer
 import io.github.project_kaat.gpsdrelay.network.udpSocketServer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -300,7 +301,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
 
         runBlocking() {
-            GlobalScope.launch() {
+            GlobalScope.launch {
                 sendInterval =
                     database.settingsDao.getSettings().first()[0].nmeaGenerationIntervalMs
 

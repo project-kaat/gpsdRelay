@@ -123,14 +123,17 @@ class tcpSocketServer (private val server : Server) :
         networkThread.interrupt()
     }
 
-    override fun send(msg : OutgoingMessage) {
-        if (!server.relayingEnabled && !msg.isGenerated) {
+    override fun send(message : OutgoingMessage) {
+        if (!server.relayingEnabled && !message.isGenerated) {
             return
         }
-        if (!server.generationEnabled && msg.isGenerated) {
+        if (!server.generationEnabled && message.isGenerated) {
             return
         }
-        if (!networkThread.messageQueue.offer(msg.data)) {
+        if (!isMessageAllowedByFilter(message, server.relayFilter)) {
+            return
+        }
+        if (!networkThread.messageQueue.offer(message.data)) {
             Log.e(TAG, "Can't insert data into MessageQueue")
         }
     }
