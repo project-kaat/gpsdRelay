@@ -1,0 +1,4 @@
+new feature: select broadcast ip address from available network interfaces during server creation
+new feature: filter relayed nmea messages by sentence type
+potential fix for service crash when a non-nullable parameter becomes null
+minor cosmetic ui reorganizations

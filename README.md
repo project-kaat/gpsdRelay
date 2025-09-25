@@ -6,9 +6,9 @@
 
 This app utilizes the GPS available on an Android device to supply information to a gpsd server.
 
-The app supports blindly relaying whatever NMEA sentences it reveives from the underlying OS location mechanisms, as well as generating it's own [NMEA](https://en.wikipedia.org/wiki/NMEA_0183) sentences using the location data, provided by the OS.
+The app supports blindly relaying whatever NMEA sentences it receives from the underlying OS location mechanisms, as well as generating it's own [NMEA](https://en.wikipedia.org/wiki/NMEA_0183) sentences using the location data, provided by the OS.
 
-For this to work, the device needs to have a GPS fix available and the gpsd server has to be reachable by the device via IP.
+For this to work, the device needs to have a GPS fix available and the gpsd server has to be reachable by the device via TCP or UDP.
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
      alt="Get it on F-Droid"
@@ -18,6 +18,6 @@ or get it from the [Releases section](https://github.com/project-kaat/gpsdRelay/
 
 ### Screenshots
 
-![main tab screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
+![main screen screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png =360x800)
 
-![settings tab screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)
+![settings screen screenshot](./fastlane/metadata/android/en-US/images/phoneScreenshots/2.png =360x800)
