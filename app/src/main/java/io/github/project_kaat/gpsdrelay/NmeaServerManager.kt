@@ -27,6 +27,7 @@ class NmeaServerManager(private val context : Context) : NetworkCallback() {
     private var connman : ConnectivityManager? = null
     private lateinit var netcallback : NetCallback
     internal val networkAvailable = AtomicBoolean(false)
+    //TODO: also check if network is available before starting service normally
 
     fun awaitConnectionAndStartService(timeout : Int) {
         autostartingService = true

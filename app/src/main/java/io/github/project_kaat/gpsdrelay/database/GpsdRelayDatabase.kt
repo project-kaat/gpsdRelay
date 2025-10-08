@@ -13,7 +13,13 @@ val MIGRATION_1_2 = object : Migration(1,2) {
     }
 }
 
-@Database(entities = [Server::class, Settings::class], version = 2)
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE Settings ADD monitorDefaultNetworkEnabled INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+@Database(entities = [Server::class, Settings::class], version = 3)
 @TypeConverters(ServerTypeConverters::class)
 abstract class GpsdRelayDatabase : RoomDatabase() {
     abstract val serverDao : ServerDao

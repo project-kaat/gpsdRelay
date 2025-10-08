@@ -12,6 +12,8 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.hardware.GeomagneticField
 import android.location.OnNmeaMessageListener
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.*
 import android.util.Log
 import android.widget.Toast
@@ -21,7 +23,6 @@ import io.github.project_kaat.gpsdrelay.network.OutgoingMessage
 import io.github.project_kaat.gpsdrelay.network.SocketServerInterface
 import io.github.project_kaat.gpsdrelay.network.tcpSocketServer
 import io.github.project_kaat.gpsdrelay.network.udpSocketServer
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -29,52 +30,79 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
 
 class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
+
+    inner class networkCallback : ConnectivityManager.NetworkCallback() {
+        private var netAvailable = false
+        override fun onAvailable(network: Network) {
+            Log.d(TAG, "net is available")
+            netAvailable = true
+            if (!serversRunning) {
+                startServers()
+            }
+
+        }
+
+        override fun onUnavailable() {
+            Log.d(TAG, "net is unavailable")
+            netAvailable = false
+            stopServersAfterDelay(2.seconds)
+        }
+
+        override fun onLost(network: Network) {
+            Log.d(TAG, "net is lost. (it's so over '_')")
+            netAvailable = false
+            stopServersAfterDelay(2.seconds)
+        }
+
+        private fun stopServersAfterDelay(delay : Duration) {
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                if (!netAvailable && serversRunning) {
+                    stopServers()
+                }
+            }, delay.inWholeMilliseconds)
+        }
+    }
+
     private val TAG = "nmeaServerService"
 
+    private val netCallback = networkCallback()
+
     private lateinit var database : GpsdRelayDatabase
+
+    private lateinit var connectivityManager : ConnectivityManager
+    private var monitorDefaultNetwork = false
     private lateinit var locationManager : LocationManager
 
     private var sendInterval : Long = 0
     private var isMockLocation : Boolean = false
     private val serverList : MutableList<SocketServerInterface> = mutableListOf()
 
+    private var serversRunning = false
+
 
     override fun onCreate() {
+        Log.d(TAG, "onCreate")
         super.onCreate()
         database = (application as gpsdRelay).gpsdRelayDatabase
         locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
+        connectivityManager = this.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    private fun isMockLocationEnabled(context : Context, p0 : Location) : Boolean {
-        // Check the status of mock location which will be used by external GPS receivers
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val providers = locationManager.getProviders(true)
+    private fun isMockLocationEnabled(location : Location) : Boolean {
 
         // API level 24-30 doesn't support Location.isMock() for this functionality
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-            for (provider in providers) {
-                if (p0.isFromMockProvider) {
-                    return true
-                }
-            }
-            return false
+            return location.isFromMockProvider
+        } else {
+            return location.isMock
         }
-
-        // API 31+ supports Location.isMock() for this functionality
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            for (provider in providers) {
-                if (p0.isMock) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        // Default to false
-        return false
-        }
+    }
 
     private fun timestampToUTC(timeMS : Long) : Array<String> {
 
@@ -265,15 +293,15 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         return msg
     }
 
-    override fun onLocationChanged(p0: Location) {
+    override fun onLocationChanged(location: Location) {
 
-        isMockLocation = isMockLocationEnabled(this, p0)
+        isMockLocation = isMockLocationEnabled(location)
 
         // If we are receiving mock location data, then create GPGGA and GPVTG strings to pass
         val msg = if (isMockLocation)
-            getGNGGA(p0) + getGNVTG(p0)
+            getGNGGA(location) + getGNVTG(location)
         else
-            getGPRMC(p0)
+            getGPRMC(location)
 
         serverList.forEach() {
             if (it.isConnected()) {
@@ -293,17 +321,36 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         }
     }
 
+    private fun startServers() {
+        Log.d(TAG, "starting serverss")
+        serverList.forEach() {
+            it.start()
+        }
+        serversRunning = true
+    }
+
+    private fun stopServers() {
+        Log.d(TAG, "stopping servers")
+        serverList.forEach() {
+            it.stop()
+        }
+        serversRunning = false
+    }
+
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
     if (intent == null || intent.action == getString(R.string.INTENT_ACTION_START_SERVICE)) {
 
         Log.d(TAG, "Service is starting")
 
-
         runBlocking() {
             GlobalScope.launch {
                 sendInterval =
                     database.settingsDao.getSettings().first()[0].nmeaGenerationIntervalMs
+
+                monitorDefaultNetwork =
+                    database.settingsDao.getSettings().first()[0].monitorDefaultNetworkEnabled
 
                 //init enabled tcp servers (just 1 atm)
 
@@ -323,11 +370,14 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
             }.join()
         }
 
-        startSelfForeground()
-
-        serverList.forEach() {
-            it.start()
+        if (monitorDefaultNetwork) {
+            connectivityManager.registerDefaultNetworkCallback(netCallback)
         }
+
+
+        startServers()
+
+        startSelfForeground()
 
         enableLocationUpdates()
 
@@ -347,9 +397,11 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy")
         disableLocationUpdates()
-        serverList.forEach() {
-            it.stop()
+        stopServers()
+        if (monitorDefaultNetwork) {
+            connectivityManager.unregisterNetworkCallback(netCallback)
         }
         super.onDestroy()
 

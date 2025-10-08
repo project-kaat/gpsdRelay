@@ -35,7 +35,6 @@ import io.github.project_kaat.gpsdrelay.database.Server
 import io.github.project_kaat.gpsdrelay.database.ServerDao
 import kotlinx.coroutines.launch
 import io.github.project_kaat.gpsdrelay.R
-import org.intellij.lang.annotations.JdkConstants
 import java.net.NetworkInterface
 
 @Composable
@@ -162,8 +161,8 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
 
     if (showAddBroadcastServerDialog) {
         AddBroadcastServerDialog(
-            onAddressSelected = {
-                ipv4temp = it
+            onInterfaceSelected = {
+                ipv4temp = "BCAST:${it}"
                 showAddBroadcastServerDialog = false
             },
             onDismiss = {
@@ -173,10 +172,10 @@ fun MainScreenAddServerDialog(dao : ServerDao, onDismiss : () -> Unit, checkServ
     }
 }
 
-data class BroadcastNetworkAddressElement(val interfaceName : String, val ipv4 : String)
+internal data class BroadcastNetworkAddressElement(val interfaceName : String, val ipv4 : String)
 
 @Composable
-fun AddBroadcastServerDialog(onAddressSelected : (String) -> Unit, onDismiss: () -> Unit) {
+fun AddBroadcastServerDialog(onInterfaceSelected : (String) -> Unit, onDismiss: () -> Unit) {
 
     val broadcastInterfaces : MutableList<BroadcastNetworkAddressElement> = mutableListOf()
 
@@ -185,7 +184,7 @@ fun AddBroadcastServerDialog(onAddressSelected : (String) -> Unit, onDismiss: ()
         if (iface.isUp && !iface.isLoopback) {
             for (interfaceAddress in iface.interfaceAddresses) {
                 val broadcast = interfaceAddress.broadcast
-                if (interfaceAddress.broadcast != null) {
+                if (broadcast != null) {
                     broadcastInterfaces += BroadcastNetworkAddressElement(
                         iface.displayName,
                         broadcast.toString().substring(1)
@@ -207,7 +206,7 @@ fun AddBroadcastServerDialog(onAddressSelected : (String) -> Unit, onDismiss: ()
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onAddressSelected(item.ipv4)
+                                    onInterfaceSelected(item.interfaceName)
                                 }
                                 .padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -220,6 +219,7 @@ fun AddBroadcastServerDialog(onAddressSelected : (String) -> Unit, onDismiss: ()
                 }
             }
         },
+        //TODO: add note here about broadcast being resolved at runtime
         confirmButton = {}
     )
 

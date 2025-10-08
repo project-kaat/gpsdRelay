@@ -2,31 +2,59 @@ package io.github.project_kaat.gpsdrelay.network
 
 import android.util.Log
 import io.github.project_kaat.gpsdrelay.database.Server
+import io.github.project_kaat.gpsdrelay.ui.BroadcastNetworkAddressElement
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 
-class udpSocketServer(servers : List<Server>) :
+class udpSocketServer(private val servers : List<Server>) :
     SocketServerInterface {
     private val TAG = "udpSocketServer"
 
-    private val generatedMsgSubscribers = servers.filter{
-        it.generationEnabled
-    }
-    private val relayedMsgSubscribers = servers.filter{
-        it.relayingEnabled
-    }
 
     private lateinit var networkThread : NetworkThread
 
     override fun isConnected() = true
 
+    private fun resolveServerAddresses() : List<Server> {
+        val resolved = mutableListOf<Server>()
+        val interfaces = NetworkInterface.getNetworkInterfaces()
+        for (server in servers) {
+            if (server.ipv4.startsWith("BCAST:")) {
+                val interfaceName = server.ipv4.substringAfter("BCAST:")
+                for (iface in interfaces) {
+                    if (iface.displayName == interfaceName) {
+                        for (interfaceAddress in iface.interfaceAddresses) {
+                            val broadcast = interfaceAddress.broadcast
+                            if (broadcast != null) {
+                                resolved += server.copy(ipv4 = broadcast.toString().substring(1)) //remove slash in the beginning
+                                Log.d("resolveServerAddress", "${server.ipv4} resolved to ${broadcast}")
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                resolved += server
+            }
+        }
+        return resolved
+    }
+
+
     override fun start() {
-        networkThread = NetworkThread()
+        val runtimeServers = resolveServerAddresses()
+        networkThread = NetworkThread(
+            runtimeServers.filter {
+                it.generationEnabled
+            },
+            runtimeServers.filter {
+                it.relayingEnabled
+            })
         networkThread.start()
     }
 
-    inner class NetworkThread() : Thread() {
+    inner class NetworkThread(val generatedMsgSubscribers : List<Server>, val relayedMsgSubscribers : List<Server>) : Thread() {
         private val TAG = "udpSocketServer.NetworkThread"
         val messageQueue : ArrayBlockingQueue<OutgoingMessage> = ArrayBlockingQueue(30)
         private lateinit var udpSocket : DatagramSocket
@@ -52,6 +80,7 @@ class udpSocketServer(servers : List<Server>) :
                         else {
                             relayedMsgSubscribers.forEach {
                                 if (isMessageAllowedByFilter(msg, it.relayFilter)) {
+                                    //TODO: this can result in unresolved address. maybe exit gracefully in this case
                                     udpSocket.send(
                                         DatagramPacket(
                                             msg.data.toByteArray(), msg.data.length,
@@ -63,6 +92,7 @@ class udpSocketServer(servers : List<Server>) :
                         }
                     } catch (_: IOException) {
                         Log.e(TAG, "client is not reachable")
+                        //TODO: when client becomes reachable, nothing much changes
                         exit()
                     }
                 }

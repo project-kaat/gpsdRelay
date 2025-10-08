@@ -1,5 +1,7 @@
 package io.github.project_kaat.gpsdrelay.ui
 
+//TODO: add hint about removing servers
+
 import android.Manifest
 import android.content.Intent
 import android.os.Build

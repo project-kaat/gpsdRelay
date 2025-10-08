@@ -43,7 +43,9 @@ data class Server(
         fun validateAndCreate(type : GpsdServerType, ipv4 : String, port : String, relayingEnabled: Boolean, generationEnabled: Boolean, creationTimestamp: Long, enabled: Boolean, relayFilter : List<String>) : Server?{
             val ipv4 = ipv4.trim()
             if (!Regex("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$").matches(ipv4)) {
-                return null
+                if (type == GpsdServerType.UDP && !ipv4.startsWith("BCAST:")) {
+                    return null
+                }
             }
             if (port.isEmpty() || port.toInt() !in (1..65535)) {
                 return null

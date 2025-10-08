@@ -28,11 +28,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.project_kaat.gpsdrelay.database.SettingsDao
 import kotlinx.coroutines.launch
 import io.github.project_kaat.gpsdrelay.R
+import io.github.project_kaat.gpsdrelay.gpsdRelay
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,9 +50,12 @@ fun SettingsScreen(settingsDao : SettingsDao) {
     val coroutineScope = rememberCoroutineScope()
     val ctx = LocalContext.current
 
+    val isServiceRunning = (ctx.applicationContext as gpsdRelay).serverManager.isServiceRunning.collectAsState()
+
     var generationIntervalTmp by remember {mutableStateOf(settings[0].nmeaGenerationIntervalMs.toString())}
     var autoStartEnabledTmp by remember {mutableStateOf(settings[0].autostartEnabled)}
     var autoStartTimeoutTmp by remember {mutableStateOf(settings[0].autostartNetworkTimeoutS.toString())}
+    var monitorDefaultNetworkTmp by remember {mutableStateOf(settings[0].monitorDefaultNetworkEnabled)}
 
     var mutated by remember {mutableStateOf(false)}
 
@@ -72,10 +78,11 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                                         1,
                                         autoStartEnabledTmp,
                                         autoStartTimeoutTmp.toInt(),
-                                        generationIntervalTmp.toLong()
+                                        generationIntervalTmp.toLong(),
+                                        monitorDefaultNetworkTmp
                                     )
                                 )
-                            } catch (e : Exception) {
+                            } catch (_ : Exception) {
                                 Toast.makeText(
                                     ctx,
                                     ctx.getString(R.string.settings_failed_to_apply),
@@ -90,6 +97,7 @@ fun SettingsScreen(settingsDao : SettingsDao) {
             )
         }
     ) { innerPadding ->
+        //TODO: is this scrollable?
         Column(modifier = Modifier
             .padding(innerPadding)
             .padding(horizontal = 10.dp, vertical = 4.dp)) {
@@ -103,7 +111,6 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                 })
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.settings_autostart_title))
                 Checkbox(checked = autoStartEnabledTmp, onCheckedChange = {
                     autoStartEnabledTmp = !autoStartEnabledTmp
                     mutated = true
@@ -115,6 +122,7 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                         }
                     }
                 })
+                Text(stringResource(R.string.settings_autostart_title))
             }
             OutlinedTextField(
                 label = { Text(stringResource(R.string.settings_autostart_timeout_title)) },
@@ -127,6 +135,16 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                 })
 
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = monitorDefaultNetworkTmp, onCheckedChange = {
+                    monitorDefaultNetworkTmp = !monitorDefaultNetworkTmp
+                    mutated = true
+                }, enabled = !isServiceRunning.value)
+                Column() {
+                    Text(stringResource(R.string.settings_monitor_default_network_title))
+                    Text(stringResource(R.string.settings_monitor_default_network_explanation), fontWeight = FontWeight.Light, fontSize = 14.sp)
+                }
+            }
 
         }
     }

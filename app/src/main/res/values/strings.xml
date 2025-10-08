@@ -77,6 +77,9 @@
 
     <string name="settings_lockscreen_warning">gpsdRelay will only autostart after the device is unlocked for the first time</string>
 
+    <string name="settings_monitor_default_network_title">Monitor default network state</string>
+    <string name="settings_monitor_default_network_explanation">Stop and restart the servers when default network disconnects or reconnects</string>
+
     #Server Manager
 
     <string name="manager_permissions_required_pre_10">gpsdRelay requires FINE/COARSE location permission!</string>

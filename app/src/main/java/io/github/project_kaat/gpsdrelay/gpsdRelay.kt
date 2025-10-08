@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import io.github.project_kaat.gpsdrelay.database.GpsdRelayDatabase
 import io.github.project_kaat.gpsdrelay.database.MIGRATION_1_2
+import io.github.project_kaat.gpsdrelay.database.MIGRATION_2_3
 import io.github.project_kaat.gpsdrelay.database.Settings
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -19,7 +20,7 @@ class gpsdRelay : Application() {
         gpsdRelayDatabase = Room.databaseBuilder(
             applicationContext, GpsdRelayDatabase::class.java,
             getString(R.string.db_name)
-        ).addMigrations(MIGRATION_1_2).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
 
         GlobalScope.launch() {
             if (!gpsdRelayDatabase.settingsDao.areSettingsPresent()) {
@@ -35,7 +36,8 @@ class gpsdRelay : Application() {
                 1,
                 false,
                 60,
-                1000
+                1000,
+                false
             )
         )
 
