@@ -39,7 +39,6 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     inner class networkCallback : ConnectivityManager.NetworkCallback() {
         private var netAvailable = false
         override fun onAvailable(network: Network) {
-            Log.d(TAG, "net is available")
             netAvailable = true
             if (runningServerList.isEmpty()) {
                 startServers()
@@ -48,13 +47,11 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         }
 
         override fun onUnavailable() {
-            Log.d(TAG, "net is unavailable")
             netAvailable = false
             stopServersAfterDelay(2.seconds)
         }
 
         override fun onLost(network: Network) {
-            Log.d(TAG, "net is lost. (it's so over '_')")
             netAvailable = false
             stopServersAfterDelay(2.seconds)
         }

@@ -92,8 +92,6 @@ class udpSocketServer(private val servers : List<Server>, private val service : 
                         }
                     } catch (_: Exception) {
                         Log.e(TAG, "client is not reachable")
-                        //TODO: when client becomes reachable, nothing much changes FIXED. now implement and test with tcp server
-                        exit()
                     }
                 }
                 exit()
