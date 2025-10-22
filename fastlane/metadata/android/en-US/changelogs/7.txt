@@ -1,0 +1,5 @@
+new feature: default network state monitoring
+changed udp broadcast server to resolve dynamically based on selected network interface
+fix for incorrect checksum format in generated NMEA messages
+minor cosmetic changes
+minor server logic fixes
