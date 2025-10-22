@@ -41,7 +41,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         override fun onAvailable(network: Network) {
             Log.d(TAG, "net is available")
             netAvailable = true
-            if (!serversRunning) {
+            if (runningServerList.isEmpty()) {
                 startServers()
             }
 
@@ -62,7 +62,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         private fun stopServersAfterDelay(delay : Duration) {
             val handler = Handler(Looper.getMainLooper())
             handler.postDelayed({
-                if (!netAvailable && serversRunning) {
+                if (!netAvailable && runningServerList.isNotEmpty()) {
                     stopServers()
                 }
             }, delay.inWholeMilliseconds)
@@ -82,8 +82,11 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     private var sendInterval : Long = 0
     private var isMockLocation : Boolean = false
     private val serverList : MutableList<SocketServerInterface> = mutableListOf()
+    private val runningServerList : MutableList<SocketServerInterface> = mutableListOf()
 
-    private var serversRunning = false
+    fun onServerStop(server : SocketServerInterface) {
+        runningServerList -= server
+    }
 
 
     override fun onCreate() {
@@ -95,7 +98,6 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     }
 
     private fun isMockLocationEnabled(location : Location) : Boolean {
-
         // API level 24-30 doesn't support Location.isMock() for this functionality
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
             return location.isFromMockProvider
@@ -105,7 +107,6 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     }
 
     private fun timestampToUTC(timeMS : Long) : Array<String> {
-
         val datetimeFormat = SimpleDateFormat("ddMMyy-HHmmss.00", Locale.US).also {
             it.timeZone = TimeZone.getTimeZone("UTC")
         }
@@ -303,7 +304,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
         else
             getGPRMC(location)
 
-        serverList.forEach() {
+        runningServerList.forEach() {
             if (it.isConnected()) {
                 it.send(OutgoingMessage(isGenerated = true, msg))
             }
@@ -313,7 +314,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     override fun onNmeaMessage(p0: String?, p1: Long) {
         //Log.i("SERVICE", "nmea message received: ${p0}")
         if (p0 != null) {
-            serverList.forEach() {
+            runningServerList.forEach() {
                 if (it.isConnected()) {
                     it.send(OutgoingMessage(isGenerated = false, p0))
                 }
@@ -322,19 +323,19 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
     }
 
     private fun startServers() {
-        Log.d(TAG, "starting serverss")
+        Log.d(TAG, "starting servers")
         serverList.forEach() {
             it.start()
+            runningServerList += it
         }
-        serversRunning = true
     }
 
     private fun stopServers() {
         Log.d(TAG, "stopping servers")
         serverList.forEach() {
             it.stop()
+            runningServerList -= it
         }
-        serversRunning = false
     }
 
 
@@ -357,7 +358,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
                 val tcpEnabled = database.serverDao.getAllTcpEnabled()
                 if (tcpEnabled.isNotEmpty()) {
                     for (tcpServer in tcpEnabled) {
-                        serverList += tcpSocketServer(tcpServer)
+                        serverList += tcpSocketServer(tcpServer, this@nmeaServerService)
                     }
                 }
 
@@ -365,7 +366,7 @@ class nmeaServerService : Service(), OnNmeaMessageListener, LocationListener {
 
                 val udpEnabled = database.serverDao.getAllUdpEnabled()
                 if (udpEnabled.isNotEmpty()) {
-                    serverList += udpSocketServer(udpEnabled)
+                    serverList += udpSocketServer(udpEnabled, this@nmeaServerService)
                 }
             }.join()
         }

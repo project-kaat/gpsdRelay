@@ -1,7 +1,5 @@
 package io.github.project_kaat.gpsdrelay.ui
 
-//TODO: add hint about removing servers
-
 import android.Manifest
 import android.content.Intent
 import android.os.Build
@@ -43,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.project_kaat.gpsdrelay.SettingsActivity
 import io.github.project_kaat.gpsdrelay.database.GpsdServerType
@@ -168,7 +167,7 @@ fun MainScreen(dao : ServerDao) {
     ) { innerPadding ->
         if (servers.isEmpty()) {
             Row (modifier = Modifier.padding(innerPadding).fillMaxWidth()) {
-                Text(stringResource(R.string.no_servers_placeholder), style= MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                Text(stringResource(R.string.no_servers_placeholder), style= MaterialTheme.typography.bodyLarge, color = Color.Gray, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
         else {
@@ -181,6 +180,7 @@ fun MainScreen(dao : ServerDao) {
                 for (server in servers) {
                     MainScreenServerElement(server = server, dao = dao)
                 }
+                Text(stringResource(R.string.remove_servers_hint), style= MaterialTheme.typography.bodyLarge, color = Color.Gray, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
     }

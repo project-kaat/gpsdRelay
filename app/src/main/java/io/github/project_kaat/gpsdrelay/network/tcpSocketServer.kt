@@ -2,13 +2,14 @@ package io.github.project_kaat.gpsdrelay.network
 
 import android.util.Log
 import io.github.project_kaat.gpsdrelay.database.Server
+import io.github.project_kaat.gpsdrelay.nmeaServerService
 import java.io.IOException
 import java.io.OutputStream
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class tcpSocketServer (private val server : Server) :
+class tcpSocketServer (private val server : Server, private val service : nmeaServerService) :
     SocketServerInterface {
 
     private val TAG = "tcpSocketServer"
@@ -21,7 +22,7 @@ class tcpSocketServer (private val server : Server) :
         try {
             src = InetSocketAddress(server.ipv4, server.port)
         }
-        catch (e : UnknownHostException) {
+        catch (_ : UnknownHostException) {
             Log.e(TAG, "Invalid ip AND/OR port supplied")
             return
         }
@@ -52,7 +53,7 @@ class tcpSocketServer (private val server : Server) :
 
                 exit()
                 return
-            } catch (e: InterruptedException) {
+            } catch (_: InterruptedException) {
                     exit()
                     return
             } finally {
@@ -69,7 +70,7 @@ class tcpSocketServer (private val server : Server) :
                         handleClientConnection(clientSocket)
                     }
                     clientThread.start()
-                } catch (e: SocketTimeoutException) {
+                } catch (_: SocketTimeoutException) {
                     if (currentThread().isInterrupted) {
                         connected = false
                         return
@@ -88,7 +89,7 @@ class tcpSocketServer (private val server : Server) :
                     msg = messageQueue.take()
                     try {
                         clientOutputStream?.write(msg.toByteArray())
-                        } catch (e: IOException) {
+                        } catch (_: Exception) {
                             Log.e(TAG, "client is not reachable")
                             clientConnected.set(false)
                             clientOutputStream?.close()
@@ -96,14 +97,14 @@ class tcpSocketServer (private val server : Server) :
                             return
                         }
                     }
-                } catch (e: InterruptedException) {
+                } catch (_: InterruptedException) {
                 //Log.i(TAG, "thread was interrupted")
                     try {
                         clientOutputStream?.close()
                         clientSocket.close()
                         clientConnected.set(false)
                         return
-                    } catch (e: IOException) {
+                    } catch (_: IOException) {
                         Log.e(TAG, "Error closing client socket")
                     } finally {
                         clientOutputStream?.close()
@@ -116,6 +117,7 @@ class tcpSocketServer (private val server : Server) :
             if (this::tcpSocketIPv4.isInitialized) {
                 tcpSocketIPv4.close()
             }
+            service.onServerStop(this@tcpSocketServer)
         }
     }
 

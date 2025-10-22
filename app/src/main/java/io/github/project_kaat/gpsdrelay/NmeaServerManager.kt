@@ -27,12 +27,11 @@ class NmeaServerManager(private val context : Context) : NetworkCallback() {
     private var connman : ConnectivityManager? = null
     private lateinit var netcallback : NetCallback
     internal val networkAvailable = AtomicBoolean(false)
-    //TODO: also check if network is available before starting service normally
 
     fun awaitConnectionAndStartService(timeout : Int) {
         autostartingService = true
-        connman = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         netcallback = NetCallback(this)
+        connman = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connman?.registerDefaultNetworkCallback(netcallback)
 
         val timeEnd =  System.currentTimeMillis() + (timeout * 1000)

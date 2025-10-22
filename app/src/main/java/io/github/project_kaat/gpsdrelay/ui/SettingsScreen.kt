@@ -3,10 +3,13 @@ package io.github.project_kaat.gpsdrelay.ui
 import android.app.KeyguardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -97,10 +100,12 @@ fun SettingsScreen(settingsDao : SettingsDao) {
             )
         }
     ) { innerPadding ->
-        //TODO: is this scrollable?
         Column(modifier = Modifier
+            .verticalScroll(rememberScrollState())
             .padding(innerPadding)
-            .padding(horizontal = 10.dp, vertical = 4.dp)) {
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.Start) {
             OutlinedTextField(
                 label = { Text(stringResource(R.string.settings_generation_interval_title)) },
                 value = generationIntervalTmp,
@@ -109,8 +114,7 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                     mutated = true
                     generationIntervalTmp = it
                 })
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Absolute.Left) {
                 Checkbox(checked = autoStartEnabledTmp, onCheckedChange = {
                     autoStartEnabledTmp = !autoStartEnabledTmp
                     mutated = true
@@ -133,8 +137,6 @@ fun SettingsScreen(settingsDao : SettingsDao) {
                     mutated = true
                     autoStartTimeoutTmp = it
                 })
-
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = monitorDefaultNetworkTmp, onCheckedChange = {
                     monitorDefaultNetworkTmp = !monitorDefaultNetworkTmp

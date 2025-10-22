@@ -33,6 +33,7 @@
     <string name="bg_location_permission_rationale">Please select "Allow all the time" to grant background location permission</string>
 
     <string name="no_servers_placeholder">Use the floating \'+\' button to add servers</string>
+    <string name="remove_servers_hint">Tap and hold to remove a server</string>
 
     #Add Server Dialog
 
@@ -56,6 +57,7 @@
     #Add Broadcast Server Dialog
 
     <string name="add_broadcast_dialog_title">Select broadcast address</string>
+    <string name="add_broadcast_dialog_hint">(address will resolve dynamically upon each server restart)</string>
 
 
     #Main Screen Server Submenu

@@ -27,7 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.project_kaat.gpsdrelay.database.GpsdServerType
@@ -196,11 +198,27 @@ fun AddBroadcastServerDialog(onInterfaceSelected : (String) -> Unit, onDismiss: 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.add_broadcast_dialog_title), fontSize = 18.sp) },
+        title = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.add_broadcast_dialog_title),
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    stringResource(R.string.add_broadcast_dialog_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Light
+                )
+            }
+        },
 
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                LazyColumn {
+                LazyColumn(userScrollEnabled = true) {
                     items(broadcastInterfaces) { item ->
                         Row(
                             modifier = Modifier
@@ -219,7 +237,6 @@ fun AddBroadcastServerDialog(onInterfaceSelected : (String) -> Unit, onDismiss: 
                 }
             }
         },
-        //TODO: add note here about broadcast being resolved at runtime
         confirmButton = {}
     )
 

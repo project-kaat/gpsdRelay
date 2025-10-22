@@ -2,12 +2,13 @@ package io.github.project_kaat.gpsdrelay.network
 
 import android.util.Log
 import io.github.project_kaat.gpsdrelay.database.Server
+import io.github.project_kaat.gpsdrelay.nmeaServerService
 import io.github.project_kaat.gpsdrelay.ui.BroadcastNetworkAddressElement
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 
-class udpSocketServer(private val servers : List<Server>) :
+class udpSocketServer(private val servers : List<Server>, private val service : nmeaServerService) :
     SocketServerInterface {
     private val TAG = "udpSocketServer"
 
@@ -54,7 +55,7 @@ class udpSocketServer(private val servers : List<Server>) :
         networkThread.start()
     }
 
-    inner class NetworkThread(val generatedMsgSubscribers : List<Server>, val relayedMsgSubscribers : List<Server>) : Thread() {
+    private inner class NetworkThread(val generatedMsgSubscribers : List<Server>, val relayedMsgSubscribers : List<Server>) : Thread() {
         private val TAG = "udpSocketServer.NetworkThread"
         val messageQueue : ArrayBlockingQueue<OutgoingMessage> = ArrayBlockingQueue(30)
         private lateinit var udpSocket : DatagramSocket
@@ -64,7 +65,7 @@ class udpSocketServer(private val servers : List<Server>) :
                 udpSocket = DatagramSocket(null)
                 udpSocket.reuseAddress = true
                 udpSocket.bind(InetSocketAddress(0))
-                while (!currentThread().isInterrupted) {
+                while (!currentThread().isInterrupted && !udpSocket.isClosed) {
                     val msg = messageQueue.take()
                     try {
                         if (msg.isGenerated) {
@@ -80,7 +81,6 @@ class udpSocketServer(private val servers : List<Server>) :
                         else {
                             relayedMsgSubscribers.forEach {
                                 if (isMessageAllowedByFilter(msg, it.relayFilter)) {
-                                    //TODO: this can result in unresolved address. maybe exit gracefully in this case
                                     udpSocket.send(
                                         DatagramPacket(
                                             msg.data.toByteArray(), msg.data.length,
@@ -90,9 +90,9 @@ class udpSocketServer(private val servers : List<Server>) :
                                 }
                             }
                         }
-                    } catch (_: IOException) {
+                    } catch (_: Exception) {
                         Log.e(TAG, "client is not reachable")
-                        //TODO: when client becomes reachable, nothing much changes
+                        //TODO: when client becomes reachable, nothing much changes FIXED. now implement and test with tcp server
                         exit()
                     }
                 }
@@ -108,6 +108,7 @@ class udpSocketServer(private val servers : List<Server>) :
             //Log.i(TAG, "closing the socket")
             udpSocket.disconnect()
             udpSocket.close()
+            service.onServerStop(this@udpSocketServer)
         }
 
     }
